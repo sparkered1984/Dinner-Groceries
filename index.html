@@ -91,7 +91,6 @@ $('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);
 /* menu selection -> grocery list */
 function setPicked(d,on){
   d.picked=on;
-  if(on&&!d.ingredients.length&&d.url)getIng(d);
   if(on){
     d.ingredients.forEach(t=>{
       const g=S.groceries.find(g=>norm(g.text)===norm(t)&&!g.done);
@@ -115,10 +114,9 @@ function renderDinners(){
     const p=el('button','pick',d.picked?'✓':'');p.setAttribute('aria-label','Add to menu');p.onclick=()=>setPicked(d,!d.picked);
     top.append(el('h3','',d.name),p);c.append(top);
     if(d.note)c.append(el('p','','📝 '+d.note));
-    if(d.ingredients.length)c.append(el('p','',d.ingredients.join(', ')));else if(d.url)c.append(el('p','','No ingredients yet. They’re pulled in when you pick it.'));
+    if(d.ingredients.length)c.append(el('p','',d.ingredients.join(', ')));else c.append(el('p','','No ingredients yet. Use Paste ingredients to add them.'));
     const r=el('div','row');r.style.marginBottom='0';
     if(d.url){const a=el('a','','View recipe');a.href=d.url;a.target='_blank';a.rel='noopener';a.style.cssText='padding:6px 8px;font-size:15px';r.append(a)}
-    if(!d.ingredients.length&&d.url){const gi=el('button','btn ghost','Get ingredients');gi.onclick=()=>getIng(d,gi);r.append(gi)}
     r.style.flexWrap='wrap';
     const pb=el('button','btn ghost','📋 Paste ingredients');
     pb.onclick=()=>{
