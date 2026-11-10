@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dinners">
+<title>Dinners &amp; Groceries</title>
+<style>
+:root{--bg:#faf7f2;--surface:#fff;--text:#2b2620;--muted:#8a8174;--line:#e8e1d6;--accent:#d9622b;--accent-text:#fff;--soft:#fbe9df;--done:#b5ada1;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1815;--surface:#26221e;--text:#f1ebe2;--muted:#9b9285;--line:#38332d;--accent:#ee8450;--accent-text:#1b1815;--soft:#3a2a20;--done:#6b645a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1815;--surface:#26221e;--text:#f1ebe2;--muted:#9b9285;--line:#38332d;--accent:#ee8450;--accent-text:#1b1815;--soft:#3a2a20;--done:#6b645a;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+main{max-width:560px;margin:0 auto;padding:16px 16px 96px}
+h1{font-size:28px;margin:8px 0 14px}
+h2{font-size:15px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs button{flex:1;padding:14px 0;border:0;background:none;color:var(--muted);font-size:15px;font-weight:600}
+.tabs button.on{color:var(--accent)}
+.row{display:flex;gap:8px;margin-bottom:10px}
+input[type=text],input[type=url],textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text)}
+textarea{min-height:70px;resize:vertical}
+.btn{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:600;background:var(--accent);color:var(--accent-text);white-space:nowrap}
+.btn:disabled{opacity:.5}
+.btn.ghost{background:none;color:var(--accent);padding:6px 8px;font-size:15px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.card.sel{border-color:var(--accent);background:var(--soft)}
+.top{display:flex;align-items:center;gap:12px}
+.top h3{margin:0;flex:1;font-size:18px}
+.pick{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:var(--surface);flex:none;color:var(--accent-text);font-size:15px;line-height:1}
+.sel .pick{background:var(--accent);border-color:var(--accent)}
+.card p{margin:8px 0 6px;color:var(--muted);font-size:15px}
+.item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.item input{width:22px;height:22px;flex:none;accent-color:var(--accent)}
+.item div{flex:1}.item small{display:block;color:var(--muted);font-size:13px}
+.item.done div{color:var(--done);text-decoration:line-through}
+.x{background:none;border:0;color:var(--muted);font-size:20px;padding:0 4px}
+.empty{color:var(--muted);text-align:center;padding:24px 0}
+.hidden{display:none}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:var(--muted);font-size:15px}
+.status{font-size:15px;color:var(--muted);margin:0 0 10px}
+.status.err{color:var(--accent)}
+a{color:var(--accent)}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:15px;z-index:5;text-align:center}
+</style>
+</head>
+<body>
+<main>
+ <section id="dinners">
+  <h1>Dinners</h1>
+  <p class="status">Tap the circle on a dinner to put it on this week’s menu. Its ingredients go to the Groceries tab.</p>
+  <h2>Add from a website</h2>
+  <div class="row"><input type="url" id="uIn" placeholder="Paste a recipe link" autocapitalize="off"><button class="btn" id="uGo">Get recipe</button></div>
+  <div id="uStat" class="status hidden"></div>
+  <div id="pasteBox" class="hidden"><textarea id="pText" placeholder="Paste the recipe text here"></textarea><div class="row" style="margin-top:8px"><button class="btn" id="pGo" style="flex:1">Extract ingredients</button></div></div>
+  <h2>Or add by hand</h2>
+  <input type="text" id="dName" placeholder="Dinner name" style="margin-bottom:8px">
+  <textarea id="dIng" placeholder="Ingredients, one per line"></textarea>
+  <div class="row" style="margin-top:8px"><button class="btn" id="dAdd" style="flex:1">Save dinner</button></div>
+  <h2>Your dinners</h2>
+  <input type="text" id="dSearch" placeholder="Search dinners" style="margin-bottom:10px">
+  <div id="dList"></div>
+ </section>
+ <section id="groceries" class="hidden">
+  <h1>Groceries</h1>
+  <div class="row"><input type="text" id="gText" placeholder="Add an item" enterkeyhint="done"><button class="btn" id="gAdd">Add</button></div>
+  <div class="bar"><span id="gCount"></span><button class="btn ghost" id="gClear">Clear checked</button></div>
+  <div id="gList"></div>
+ </section>
+</main>
+<div id="toast" class="toast hidden"></div>
+<nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t2">🛒 Groceries</button></nav>
+<script>
+let S={dinners:[],groceries:[]};
+try{const r=localStorage.getItem('dg-state2')||localStorage.getItem('dg-state');if(r)S=JSON.parse(r)}catch(e){}
+if(!S||!Array.isArray(S.dinners)||!Array.isArray(S.groceries))S={dinners:[],groceries:[]};
+S.dinners.forEach(d=>{d.picked=!!d.picked});
+S.groceries.forEach(g=>{if(!Array.isArray(g.src))g.src=[]});
+const save=()=>{try{localStorage.setItem('dg-state2',JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+const norm=s=>s.trim().toLowerCase();
+
+function show(n){$('dinners').classList.toggle('hidden',n!==1);$('groceries').classList.toggle('hidden',n!==2);$('t1').classList.toggle('on',n===1);$('t2').classList.toggle('on',n===2)}
+$('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);
+
+/* menu selection -> grocery list */
+function setPicked(d,on){
+  d.picked=on;
+  if(on&&!d.ingredients.length&&d.url)getIng(d);
+  if(on){
+    d.ingredients.forEach(t=>{
+      const g=S.groceries.find(g=>norm(g.text)===norm(t)&&!g.done);
+      if(g){if(!g.src.includes(d.id))g.src.push(d.id)}
+      else S.groceries.push({id:uid(),text:t.trim(),done:false,src:[d.id]});
+    });
+  }else{
+    S.groceries.forEach(g=>{g.src=g.src.filter(s=>s!==d.id)});
+    S.groceries=S.groceries.filter(g=>g.done||g.manual||g.src.length);
+  }
+  save();renderDinners();renderGroceries();
+}
+
+function renderDinners(){
+  const box=$('dList');box.replaceChildren();
+  const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q));
+  if(!list.length){box.append(el('div','empty',S.dinners.length?'No match.':'No dinners yet.'));return}
+  list.forEach(d=>{
+    const c=el('div','card'+(d.picked?' sel':''));
+    const top=el('div','top');
+    const p=el('button','pick',d.picked?'✓':'');p.setAttribute('aria-label','Add to menu');p.onclick=()=>setPicked(d,!d.picked);
+    top.append(el('h3','',d.name),p);c.append(top);
+    if(d.note)c.append(el('p','','📝 '+d.note));
+    if(d.ingredients.length)c.append(el('p','',d.ingredients.join(', ')));else if(d.url)c.append(el('p','','No ingredients yet. They’re pulled in when you pick it.'));
+    const r=el('div','row');r.style.marginBottom='0';
+    if(d.url){const a=el('a','','View recipe');a.href=d.url;a.target='_blank';a.rel='noopener';a.style.cssText='padding:6px 8px;font-size:15px';r.append(a)}
+    if(!d.ingredients.length&&d.url){const gi=el('button','btn ghost','Get ingredients');gi.onclick=()=>getIng(d,gi);r.append(gi)}
+    const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
+    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
+    const x=el('button','btn ghost','Delete');
+    x.onclick=()=>{if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners()};
+    r.append(e,x);c.append(r);box.append(c);
+  });
+}
+
+function renderGroceries(){
+  const box=$('gList');box.replaceChildren();
+  const left=S.groceries.filter(g=>!g.done).length;
+  $('gCount').textContent=S.groceries.length?left+' to buy':'';
+  if(!S.groceries.length){box.append(el('div','empty','Nothing here yet. Pick a dinner or add an item.'));return}
+  [...S.groceries].sort((a,b)=>a.done-b.done).forEach(g=>{
+    const i=el('div','item'+(g.done?' done':''));
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=g.done;
+    cb.onchange=()=>{g.done=cb.checked;save();renderGroceries()};
+    const mid=el('div','',g.text);
+    const names=g.src.map(id=>(S.dinners.find(d=>d.id===id)||{}).name).filter(Boolean);
+    if(names.length)mid.append(el('small','','for '+names.join(', ')));
+    const x=el('button','x','×');x.setAttribute('aria-label','Remove');
+    x.onclick=()=>{S.groceries=S.groceries.filter(v=>v.id!==g.id);save();renderGroceries()};
+    i.append(cb,mid,x);box.append(i);
+  });
+}
+
+function saveDinner(name,ing,url){
+  S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',picked:false});
+  save();renderDinners();
+}
+$('dAdd').onclick=()=>{
+  const n=$('dName').value.trim();if(!n)return;
+  const ing=$('dIng').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  saveDinner(n,ing,$('uIn').value.trim());
+  $('dName').value='';$('dIng').value='';$('uIn').value='';
+};
+const gAdd=()=>{const t=$('gText').value.trim();if(!t)return;
+  if(!S.groceries.some(g=>norm(g.text)===norm(t)&&!g.done))S.groceries.push({id:uid(),text:t,done:false,src:[],manual:true});
+  $('gText').value='';save();renderGroceries()};
+$('gAdd').onclick=gAdd;
+$('gText').addEventListener('keydown',e=>{if(e.key==='Enter')gAdd()});
+$('gClear').onclick=()=>{S.groceries=S.groceries.filter(g=>!g.done);save();renderGroceries()};
+
+/* recipe from website, via Claude */
+let sample=null;
+function status(msg,err){const s=$('uStat');s.textContent=msg;s.className='status'+(err?' err':'')+(msg?'':' hidden')}
+function parseJSON(t){const m=String(t).match(/\{[\s\S]*\}/);if(!m)return null;try{return JSON.parse(m[0])}catch(e){return null}}
+const FORMAT='Return ONLY JSON like {"title":"Dish name","ingredients":["2 cups rice","1 lb chicken thighs"]}. Use short grocery-list style items, one per entry, no instructions.';
+async function ask(prompt,btn){
+  if(!sample){try{sample=await claude.use('sample')}catch(e){sample=null}}
+  if(!sample){status('Automatic lookup isn’t available here. Type the dinner in by hand below.',true);return null}
+  btn.disabled=true;status('Reading the recipe…');
+  try{const r=await sample(prompt,{cache:false});return parseJSON(r.text)}
+  catch(e){status('That didn’t work'+(e&&e.code==='not_granted'?' (permission was declined)':'')+'. Try pasting the recipe text instead.',true);$('pasteBox').classList.remove('hidden');return null}
+  finally{btn.disabled=false}
+}
+function done(res,url){
+  if(!res||res.error||!res.title||!Array.isArray(res.ingredients)||!res.ingredients.length){
+    status('I couldn’t read that site. Paste the recipe text below and I’ll pull out the ingredients.',true);$('pasteBox').classList.remove('hidden');return}
+  saveDinner(String(res.title),res.ingredients.map(String),url);
+  status('Added “'+res.title+'” ✓');$('uIn').value='';$('pText').value='';$('pasteBox').classList.add('hidden');
+}
+$('uGo').onclick=async()=>{
+  const url=$('uIn').value.trim();if(!/^https?:\/\//i.test(url)){status('Paste a full link starting with https://',true);return}
+  done(await ask('Open this recipe page and extract it: '+url+'\nIf you cannot open or read it, return {"error":"unreadable"}. '+FORMAT,$('uGo')),url);
+};
+$('pGo').onclick=async()=>{
+  const t=$('pText').value.trim();if(!t)return;
+  done(await ask('Extract the dish name and ingredient list from this recipe text. '+FORMAT+'\n\nRECIPE TEXT:\n'+t.slice(0,12000),$('pGo')),$('uIn').value.trim());
+};
+
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hidden'),4500)}
+async function getIng(d,btn){
+  if(!sample){try{sample=await claude.use('sample')}catch(e){sample=null}}
+  if(!sample){toast('Automatic lookup isn’t available here. Use Edit to type the ingredients.');return}
+  if(btn){btn.disabled=true;btn.textContent='Getting…'}
+  toast('Getting ingredients for '+d.name+'…');
+  try{
+    const r=await sample('Open this recipe page and extract its ingredients: '+d.url+'\nIf you cannot open or read it, return {"error":"unreadable"}. Return ONLY JSON like {"ingredients":["2 cups rice"]}. Short grocery-list items, one per entry.',{cache:false});
+    const j=parseJSON(r.text);
+    if(j&&Array.isArray(j.ingredients)&&j.ingredients.length){d.ingredients=j.ingredients.map(String);save();
+      if(d.picked){d.picked=false;setPicked(d,true)}else renderDinners();toast('Got ingredients for '+d.name+' ✓')}
+    else{toast('Couldn’t read that site. Use Edit to paste the ingredients for '+d.name+'.');renderDinners()}
+  }catch(e){toast('That didn’t work. Try again in a moment.');renderDinners()}
+}
+
+const SEED=[
+"Juliana’s sausage & peppers one-pot pasta|https://cooking.nytimes.com/recipes/1025984-sausage-and-peppers-one-pot-pasta?unlocked_article_code=1.1VA.7fng.PhBXS-WdYEcW|ko approved",
+"Homemade Alfredo|https://www.foxvalleyfoodie.com/alfredo-sauce-without-heavy-cream/|delicious",
+"Homemade pasta|https://www.gimmesomeoven.com/homemade-pasta/|delicious",
+"Meatballs|https://www.iheartnaptime.net/meatball-recipe/",
+"Chili",
+"Lunch lady chocolate peanut butter bars|https://www.allrecipes.com/recipe/9999/peanut-butter-bars-i/|yummy",
+"Bulgogi beef|https://thebigmansworld.com/bulgogi-sauce/",
+"Fluffy pancakes|https://www.laurafuentes.com/fluffy-pancakes-recipe/",
+"Fluffy pancakes (our recipe)||Whisk whites with sugar until fluffy. Mix a little fluff into the yolks, milk, vanilla and flour, then fold the yolk mix into the fluff. Don’t overmix.",
+"Poached salmon|https://youtube.com/shorts/Vg73Oq3UwFY",
+"30-minute dinner rolls|https://www.spendwithpennies.com/30-minute-dinner-rolls/",
+"Chicken gnocchi soup (Olive Garden style)|https://www.lecremedelacrumb.com/olive-garden-chicken-gnocchi-soup/",
+"Olive Garden breadsticks|https://handletheheat.com/copycat-olive-garden-breadsticks/",
+"Eggplant Parmesan|https://asimplepalate.com/blog/classic-eggplant-parmesan/",
+"Breakfast biscuits|https://natashaskitchen.com/homemade-biscuits/",
+"Spring roll peanut sauce|https://www.hungryhuy.com/vietnamese-peanut-sauce/",
+"Smoked pork butt (pulled pork)|https://www.traeger.com/recipes/traeger-pulled-pork",
+"Saag paneer|https://www.indianhealthyrecipes.com/saag-paneer/",
+"Brown butter chocolate chip cookies|https://sallysbakingaddiction.com/brown-butter-chocolate-chip-cookies/",
+"Niçoise salad|https://www.howsweeteats.com/2019/04/nicoise-salad/",
+"Chopped Thai chicken salad|https://pinchofyum.com/chopped-thai-chicken-salad",
+"Seared ahi tuna|https://www.feastingathome.com/seared-tuna/|Cucumber salad link is in the recipe",
+"Vanilla Dutch baby|https://www.allrecipes.com/recipe/264986/vanilla-dutch-baby/",
+"Seven-layer bean dip|https://www.allrecipes.com/recipe/19673/seven-layer-taco-dip/",
+"Roasted cabbage wedges|https://www.tastingtable.com/783834/roasted-cabbage-wedges-recipe/",
+"Asian cabbage salad",
+"Green goddess salad|https://feelgoodfoodie.net/recipe/chopped-green-goddess-salad/",
+"Pad kee mao (drunken noodles)|https://tastesbetterfromscratch.com/drunken-noodles/|the best one",
+"Korean pan-fried rice cakes|https://www.beyondkimchee.com/pan-fried-rice-cakes/|fast",
+"Pork dumpling soup|https://www.thekitchn.com/lunar-new-year-recipe-pork-dumpling-soup-guest-post-from-bee-of-rasa-malaysia-164715",
+"Matzo ball soup|https://cooking.nytimes.com/recipes/12348-joan-nathans-matzo-ball-soup",
+"Pumpkin cake roll|https://tastesbetterfromscratch.com/classic-pumpkin-roll/",
+"Skewer-less chicken kebab|https://elephantsandthecoconuttrees.com/2023/05/skewer-less-chicken-kebab.html",
+"Chicken kofta kebabs|https://www.babaganosh.org/chicken-kofta-kebabs/",
+"Lemon butter chicken|https://www.saltandlavender.com/lemon-butter-chicken/",
+"Veggie minestrone soup|https://jackfruitful.com/vegetable-minestrone-soup/",
+"Butternut squash curry|https://www.budgetbytes.com/butternut-squash-curry/",
+"Butternut squash gnocchi with sausage|https://juliasalbum.com/creamy-butternut-squash-gnocchi-with-sausage/",
+"Minnesota wild rice soup|https://iheartvegetables.com/minnesota-wild-rice-soup/",
+"Cashew chicken (RecipeTin Eats)|https://www.recipetineats.com/chinese-cashew-chicken/",
+"Cashew chicken (Pinch of Yum)|https://pinchofyum.com/cashew-chicken",
+"Lemon Parmesan chicken with arugula|https://www.foodnetwork.com/recipes/ina-garten/lemon-parmesan-chicken-with-arugula-salad-topping-5176940|Serve with Parmesan rice and arugula",
+"Broccoli cheddar chicken & rice casserole|https://www.halfbakedharvest.com/broccoli-cheddar-chicken-and-rice-casserole/",
+"Butter chicken|https://www.americastestkitchen.com/recipes/11519-indian-butter-chicken-murgh-makhani",
+"Creamy spinach artichoke chicken stew|https://cooking.nytimes.com/recipes/1021794-creamy-spinach-artichoke-chicken-stew|to try",
+"Truffle carbonara|https://italianfoodforever.com/2009/11/pasta-with-white-truffle-carbonara/",
+"Tom kha soup|https://40aprons.com/tom-kha-soup-whole30/",
+"Bang bang chicken skewers|https://sailorbailey.com/blog/bang-bang-chicken-skewers/",
+"Creamy French onion & mushroom soup|https://www.halfbakedharvest.com/creamy-french-onion-and-mushroom-soup/",
+"Baked French onion meatballs|https://www.halfbakedharvest.com/baked-french-onion-meatballs/",
+"Soup dumplings (xiao long bao)|https://redhousespice.com/xiao-long-bao-soup-dumplings/",
+"Asian garlic noodles|https://theforkedspoon.com/asian-garlic-noodles/",
+"Tomato beet salad|https://www.cnn.com/travel/article/searching-for-mexico-tomato-salad-wellness-origseriesfilms/index.html|haven’t tried yet",
+"Asian chicken lettuce wraps|https://www.thepioneerwoman.com/food-cooking/recipes/a82960/slow-cooker-asian-chicken-lettuce-cups/",
+"Lemon caper salmon|https://www.thecookierookie.com/lemon-butter-salmon-parchment/",
+"Steak skewers with chimichurri|https://www.bonappetit.com/recipe/chimichurri-sauce-2",
+"Bun cha (Vietnamese pork ball salad)|https://delightfulplate.com/vietnamese-grilled-pork-meatballs-noodles-bun-cha/",
+"Italian sausage soup|https://www.cookingclassy.com/italian-sausage-soup/",
+"Tortellini Italian sausage soup (slow cooker)|https://www.foodiecrush.com/slow-cooker-tortellini-soup/",
+"Pan-fried sesame garlic tofu stir fry|https://www.tablefortwoblog.com/pan-fried-sesame-garlic-tofu/",
+"Tibetan vegetable momos|https://www.thecuriouschickpea.com/tibetan-vegetable-momos-with-spicy-sesame-tomato-chutney/",
+"Panko fried shrimp (for tacos)|https://www.food.com/recipe/panko-fried-shrimp-375136|Serve as tacos with sweet chili sauce",
+"Cilantro lime cole slaw (for shrimp tacos)|https://blackberrybabe.com/2015/08/19/cilantro-lime-cole-slaw/",
+"Zuppa Toscana|https://cafedelites.com/zuppa-toscana/",
+"Sheet pan sesame tofu & vegetables|https://eatwithclarity.com/sheet-pan-sesame-tofu-vegetables/",
+"Bakery-style chocolate chip muffins|https://sallysbakingaddiction.com/bakery-style-chocolate-chip-muffins/",
+"Street corn pasta salad","Eggs / chef salad","Shrimp salad","Spring rolls (tofu or shrimp)","Burgers (bacon, kimchi)","Goulash / hamburger surprise","Tacos","Taco salad (chips or tater tots)","Salmon","Iranian green stew","Nachos","Gnocchi with cream, spinach & lemon sauce","Sour cream & dill schnitzel with fries","Egg roll in a bowl","Miso soup","Spring roll in a bowl","Mother’s pasta","Shrub cocktail||2 parts rum, 3/4 part shrub, 3/4 lime, 1/4 coconut, splash of habanero bitters"
+];
+const ING={
+"Chili":["1 lb ground beef","1 package bacon","2 cans black beans","1 can kidney beans","2 green bell peppers","1 red onion","3 cloves garlic","2 cans crushed tomatoes","salt","ground pepper","cumin","sage","basil","paprika","chili powder"],
+"Asian cabbage salad":["cabbage","ginger","onion","cilantro","Thai basil","limes","fish sauce"],
+"Fluffy pancakes (our recipe)":["2 egg whites","2 egg yolks","sugar","milk","vanilla","flour"],
+"Shrub cocktail":["rum","shrub","limes","coconut","habanero bitters"]
+};
+if(!S.seeded){
+  const have=new Set(S.dinners.map(d=>norm(d.name)));
+  SEED.forEach((s,i)=>{const [name,url='',note='']=s.split('|');if(have.has(norm(name)))return;
+    S.dinners.push({id:'s'+i,name,url,note,ingredients:ING[name]||[],picked:false})});
+  S.dinners.sort((a,b)=>a.name.localeCompare(b.name));S.seeded=1;save();
+}
+$('dSearch').addEventListener('input',renderDinners);
+
+renderDinners();renderGroceries();
+</script>
+</body>
+</html>
