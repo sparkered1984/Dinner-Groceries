@@ -49,6 +49,7 @@ a{color:var(--accent)}
 </head>
 <body>
 <main>
+ <p id="sync" class="status hidden"></p>
  <section id="dinners">
   <h1>Dinners</h1>
   <p class="status">Tap the circle on a dinner to put it on this week’s menu. Its ingredients go to the Groceries tab.</p>
@@ -79,7 +80,9 @@ try{const r=localStorage.getItem('dg-state2')||localStorage.getItem('dg-state');
 if(!S||!Array.isArray(S.dinners)||!Array.isArray(S.groceries))S={dinners:[],groceries:[]};
 S.dinners.forEach(d=>{d.picked=!!d.picked});
 S.groceries.forEach(g=>{if(!Array.isArray(g.src))g.src=[]});
-const save=()=>{try{localStorage.setItem('dg-state2',JSON.stringify(S))}catch(e){}};
+const saveLocal=()=>{try{localStorage.setItem('dg-state2',JSON.stringify(S))}catch(e){}};
+let cloudPush=()=>{};
+const save=()=>{saveLocal();cloudPush()};
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
@@ -346,6 +349,37 @@ if(!S.seeded){
   S.dinners.sort((a,b)=>a.name.localeCompare(b.name));S.seeded=1;save();
 }
 $('dSearch').addEventListener('input',renderDinners);
+
+/* shared list via Firebase (fill in FB below) */
+const FB={apiKey:"AIzaSyCHiFnE5Qtcd5hAhf38chh6HqjsbeX75E4",authDomain:"dinner-grocery-app.firebaseapp.com",projectId:"dinner-grocery-app",storageBucket:"dinner-grocery-app.firebasestorage.app",messagingSenderId:"303437474053",appId:"1:303437474053:web:6969571c9fb0dd7a94af6c"};
+function setSync(m){const s=$('sync');s.textContent=m;s.classList.toggle('hidden',!m)}
+async function startCloud(){
+  if(!FB.apiKey)return;
+  const code='dinner-family-list-7k3q9x';
+  setSync('\u2601\ufe0f Connecting\u2026');
+  try{
+    const [A,F]=await Promise.all([import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')]);
+    const ref=F.doc(F.getFirestore(A.initializeApp(FB)),'lists',code);
+    let lastD='',lastG='';
+    cloudPush=()=>{
+      const d=JSON.stringify(S.dinners),g=JSON.stringify(S.groceries),p={};
+      if(d!==lastD){p.dinners=d;lastD=d}
+      if(g!==lastG){p.groceries=g;lastG=g}
+      if(!Object.keys(p).length)return;
+      F.setDoc(ref,p,{merge:true}).then(()=>setSync('\u2601\ufe0f Synced')).catch(()=>{lastD='';lastG='';setSync('\u26a0\ufe0f Couldn\u2019t save. Check your connection.')});
+    };
+    F.onSnapshot(ref,snap=>{
+      if(snap.metadata.hasPendingWrites)return;
+      if(!snap.exists()){cloudPush();setSync('\u2601\ufe0f Synced');return}
+      const x=snap.data();let ch=false;
+      if(typeof x.dinners==='string'&&x.dinners!==lastD){try{const v=JSON.parse(x.dinners);if(Array.isArray(v)){v.forEach(d=>{d.picked=!!d.picked;d.ingredients=d.ingredients||[]});S.dinners=v;lastD=x.dinners;ch=true}}catch(e){}}
+      if(typeof x.groceries==='string'&&x.groceries!==lastG){try{const v=JSON.parse(x.groceries);if(Array.isArray(v)){v.forEach(g=>{g.src=g.src||[]});S.groceries=v;lastG=x.groceries;ch=true}}catch(e){}}
+      if(ch){S.seeded=1;saveLocal();renderDinners();renderGroceries()}
+      setSync('\u2601\ufe0f Synced');
+    },()=>setSync('\u26a0\ufe0f Sync problem. Using this phone only.'));
+  }catch(e){setSync('\u26a0\ufe0f Couldn\u2019t connect. Using this phone only.')}
+}
+startCloud();
 
 renderDinners();renderGroceries();
 </script>
