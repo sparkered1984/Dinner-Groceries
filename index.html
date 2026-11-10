@@ -132,9 +132,6 @@ function renderDinners(){
       rr.append(go,cn);b.append(t,pv,rr);c.insertBefore(b,r);t.focus();
     };
     r.append(pb);
-    const sb=el('button','btn ghost','📷 From screenshot');
-    sb.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{if(inp.files[0])shotIng(d,inp.files[0],sb)};inp.click()};
-    r.append(sb);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
     e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
     const x=el('button','btn ghost','Delete');
