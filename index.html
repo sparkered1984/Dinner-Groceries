@@ -119,6 +119,22 @@ function renderDinners(){
     const r=el('div','row');r.style.marginBottom='0';
     if(d.url){const a=el('a','','View recipe');a.href=d.url;a.target='_blank';a.rel='noopener';a.style.cssText='padding:6px 8px;font-size:15px';r.append(a)}
     if(!d.ingredients.length&&d.url){const gi=el('button','btn ghost','Get ingredients');gi.onclick=()=>getIng(d,gi);r.append(gi)}
+    r.style.flexWrap='wrap';
+    const pb=el('button','btn ghost','📋 Paste ingredients');
+    pb.onclick=()=>{
+      if(c.querySelector('.pbox'))return;
+      const b=el('div','pbox');const t=document.createElement('textarea');t.placeholder='Paste the ingredient list from the recipe site';
+      const pv=el('p','','');
+      t.oninput=()=>{const l=cleanIng(t.value);pv.textContent=l.length?'Will add: '+l.join(', '):''};
+      const rr=el('div','row');const go=el('button','btn','Add ingredients');go.style.flex='1';
+      go.onclick=()=>{const l=cleanIng(t.value);if(!l.length){toast('I didn’t find any ingredients in that.');return}addIngs(d,l)};
+      const cn=el('button','btn ghost','Cancel');cn.onclick=()=>b.remove();
+      rr.append(go,cn);b.append(t,pv,rr);c.insertBefore(b,r);t.focus();
+    };
+    r.append(pb);
+    const sb=el('button','btn ghost','📷 From screenshot');
+    sb.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{if(inp.files[0])shotIng(d,inp.files[0],sb)};inp.click()};
+    r.append(sb);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
     e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
     const x=el('button','btn ghost','Delete');
@@ -190,6 +206,54 @@ $('pGo').onclick=async()=>{
   done(await ask('Extract the dish name and ingredient list from this recipe text. '+FORMAT+'\n\nRECIPE TEXT:\n'+t.slice(0,12000),$('pGo')),$('uIn').value.trim());
 };
 
+function shrink(file){return new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
+  img.onload=()=>{const s=Math.min(1,1600/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('img')),'image/jpeg',0.85)};
+  img.onerror=()=>rej(new Error('img'));img.src=u})}
+async function shotIng(d,file,btn){
+  if(!sample){try{sample=await claude.use('sample')}catch(e){sample=null}}
+  let ok=false;try{ok=sample&&(await sample.limits()).images}catch(e){}
+  if(!ok){toast('Screenshot reading isn’t available here. Use Edit to type the ingredients.');return}
+  btn.disabled=true;toast('Reading the screenshot…');
+  try{
+    const blob=await shrink(file);
+    const r=await sample('This is a screenshot of a recipe\'s ingredient list. Return ONLY JSON like {"ingredients":["2 cups rice"]}. Short grocery-list items, one per entry, keep quantities, skip headings and instructions. If there are no ingredients, return {"error":"none"}.',{images:[blob],cache:false});
+    const j=parseJSON(r.text);
+    if(j&&Array.isArray(j.ingredients)&&j.ingredients.length){
+      const add=j.ingredients.map(String).filter(a=>!d.ingredients.some(x=>norm(x)===norm(a)));
+      d.ingredients=d.ingredients.concat(add);save();
+      if(d.picked){d.picked=false;setPicked(d,true)}else renderDinners();
+      toast('Added '+add.length+' ingredients to '+d.name+' ✓');
+    }else toast('I couldn’t find ingredients in that picture. Try a clearer screenshot.');
+  }catch(e){toast('That didn’t work. Try again in a moment.')}
+  finally{btn.disabled=false}
+}
+const UNITS=new Set('cup cups c tbsp tbsps tablespoon tablespoons tsp tsps teaspoon teaspoons oz ounce ounces lb lbs pound pounds g gram grams kg ml l liter liters can cans package packages pkg packet packets clove cloves pinch pinches dash dashes stick sticks slice slices bunch bunches handful sprig sprigs head heads jar jars bag bags container containers quart quarts pint pints gallon fl piece pieces inch inches'.split(' '));
+const DESC=new Set('large medium small extra-large fresh freshly warm cold melted softened chopped minced diced sliced shredded grated peeled cubed thinly finely roughly coarsely packed heaping scant rounded boneless skinless optional divided drained rinsed ripe'.split(' '));
+const isQ=w=>/^[\d½¼¾⅓⅔⅛][\d\/.½¼¾⅓⅔⅛\-–]*([a-z]+)?$/i.test(w||'');
+function cleanIng(text){
+  const out=[],seen=new Set();
+  String(text).split(/[\n\r▢☐◻•●▪■□]+/).forEach(raw=>{
+    let s=raw.replace(/\([^)]*\)/g,' ').replace(/^[\s\-*–—✓✔]+/,'').trim();
+    if(!s||/:\s*$/.test(s)||/^for the /i.test(s)||!/[a-z]/i.test(s))return;
+    s=s.split(/[,;]/)[0].replace(/\b(to taste|for serving|for garnish|for dusting|for frying|optional|divided|plus more.*)/ig,' ');
+    const t=s.split(/\s+/).filter(Boolean);let i=0;
+    while(i<t.length&&(isQ(t[i])||(/^(to|or)$/i.test(t[i])&&i>0&&isQ(t[i+1]))))i++;
+    if(i===0&&/^(a|an)$/i.test(t[0]||'')&&UNITS.has((t[1]||'').toLowerCase()))i=1;
+    while(i<t.length&&UNITS.has(t[i].toLowerCase().replace(/\.$/,'')))i++;
+    if(i<t.length&&/^of$/i.test(t[i]))i++;
+    const name=t.slice(i).filter(w=>!DESC.has(w.toLowerCase().replace(/[.,]/g,''))).join(' ').replace(/^of\s+/i,'').trim();
+    if(name.length>1&&!seen.has(name.toLowerCase())){seen.add(name.toLowerCase());out.push(name)}
+  });
+  return out;
+}
+function addIngs(d,list){
+  const add=list.filter(a=>!d.ingredients.some(x=>norm(x)===norm(a)));
+  if(!add.length){toast('Nothing new to add.');return}
+  d.ingredients=d.ingredients.concat(add);save();
+  if(d.picked){d.picked=false;setPicked(d,true)}else renderDinners();
+  toast('Added '+add.length+' to '+d.name+' ✓');
+}
 let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hidden'),4500)}
 async function getIng(d,btn){
   if(!sample){try{sample=await claude.use('sample')}catch(e){sample=null}}
