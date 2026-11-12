@@ -107,6 +107,7 @@ function setPicked(d,on){
   save();renderDinners();renderGroceries();
 }
 
+const openIng=new Set();
 function renderDinners(){
   const box=$('dList');box.replaceChildren();
   const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q));
@@ -117,7 +118,13 @@ function renderDinners(){
     const p=el('button','pick',d.picked?'✓':'');p.setAttribute('aria-label','Add to menu');p.onclick=()=>setPicked(d,!d.picked);
     top.append(el('h3','',d.name),p);c.append(top);
     if(d.note)c.append(el('p','','📝 '+d.note));
-    if(d.ingredients.length)c.append(el('p','',d.ingredients.join(', ')));else c.append(el('p','','No ingredients yet. Use Paste ingredients to add them.'));
+    if(d.ingredients.length){
+      const open=openIng.has(d.id),n=d.ingredients.length;
+      const tg=el('button','btn ghost',(open?'Hide':'Show')+' ingredients ('+n+')');tg.style.padding='8px 0 0';
+      const ip=el('p','',d.ingredients.join(', '));if(!open)ip.classList.add('hidden');
+      tg.onclick=()=>{const h=ip.classList.toggle('hidden');if(h)openIng.delete(d.id);else openIng.add(d.id);tg.textContent=(h?'Show':'Hide')+' ingredients ('+n+')'};
+      c.append(tg,ip);
+    }else c.append(el('p','','No ingredients yet. Use Paste ingredients to add them.'));
     const r=el('div','row');r.style.marginBottom='0';
     if(d.url){const a=el('a','','View recipe');a.href=d.url;a.target='_blank';a.rel='noopener';a.style.cssText='padding:6px 8px;font-size:15px';r.append(a)}
     r.style.flexWrap='wrap';
