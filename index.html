@@ -65,6 +65,12 @@ a{color:var(--accent)}
   <input type="text" id="dSearch" placeholder="Search dinners" style="margin-bottom:10px">
   <div id="dList"></div>
  </section>
+ <section id="pantry" class="hidden">
+  <h1>Pantry</h1>
+  <p class="status">Things you always have. They won’t be added to Groceries when you pick a dinner. An item only matches itself, so “Pepper” won’t skip “Bell pepper”, and “Olive oil” and “Sesame oil” are separate.</p>
+  <div class="row"><input type="text" id="pantryIn" placeholder="Add a pantry item" enterkeyhint="done" autocapitalize="sentences"><button class="btn" id="pAdd">Add</button></div>
+  <div id="pList"></div>
+ </section>
  <section id="groceries" class="hidden">
   <h1>Groceries</h1>
   <div class="row"><input type="text" id="gText" placeholder="Add an item" enterkeyhint="done"><button class="btn" id="gAdd">Add</button></div>
@@ -73,11 +79,13 @@ a{color:var(--accent)}
  </section>
 </main>
 <div id="toast" class="toast hidden"></div>
-<nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t2">🛒 Groceries</button></nav>
+<nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t2">🛒 Groceries</button><button id="t3">🧂 Pantry</button></nav>
 <script>
 let S={dinners:[],groceries:[]};
 try{const r=localStorage.getItem('dg-state2')||localStorage.getItem('dg-state');if(r)S=JSON.parse(r)}catch(e){}
 if(!S||!Array.isArray(S.dinners)||!Array.isArray(S.groceries))S={dinners:[],groceries:[]};
+if(!Array.isArray(S.pantry)||(!S.pantryV2&&S.pantry.join('|')==='Salt|Pepper|Water|Oil'))S.pantry=['Salt','Pepper','Water','Olive oil','Sesame oil'];
+S.pantryV2=1;
 S.dinners.forEach(d=>{d.picked=!!d.picked});
 S.groceries.forEach(g=>{if(!Array.isArray(g.src))g.src=[]});
 const saveLocal=()=>{try{localStorage.setItem('dg-state2',JSON.stringify(S))}catch(e){}};
@@ -88,18 +96,23 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 const norm=s=>s.trim().toLowerCase();
 
-function show(n){$('dinners').classList.toggle('hidden',n!==1);$('groceries').classList.toggle('hidden',n!==2);$('t1').classList.toggle('on',n===1);$('t2').classList.toggle('on',n===2)}
-$('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);
+function show(n){['dinners','groceries','pantry'].forEach((id,i)=>{$(id).classList.toggle('hidden',n!==i+1);$('t'+(i+1)).classList.toggle('on',n===i+1)})}
+$('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);$('t3').onclick=()=>show(3);
 
 /* menu selection -> grocery list */
+const sn=x=>x.toLowerCase().replace(/\b(ground|black|kosher|sea|fine|coarse|table|freshly)\b/g,' ').replace(/\s+/g,' ').trim();
+function isStaple(t){const n=sn(cleanIng(t)[0]||t);return !!n&&S.pantry.some(p=>sn(p)===n)}
 function setPicked(d,on){
   d.picked=on;
   if(on){
+    let skipped=0;
     d.ingredients.forEach(t=>{
+      if(isStaple(t)){skipped++;return}
       const g=S.groceries.find(g=>norm(g.text)===norm(t)&&!g.done);
       if(g){if(!g.src.includes(d.id))g.src.push(d.id)}
       else S.groceries.push({id:uid(),text:t.trim(),done:false,src:[d.id]});
     });
+    if(skipped)toast('Skipped '+skipped+' pantry item'+(skipped>1?'s':''));
   }else{
     S.groceries.forEach(g=>{g.src=g.src.filter(s=>s!==d.id)});
     S.groceries=S.groceries.filter(g=>g.done||g.manual||g.src.length);
@@ -166,6 +179,21 @@ function renderGroceries(){
   });
 }
 
+function renderPantry(){
+  const box=$('pList');box.replaceChildren();
+  if(!S.pantry.length){box.append(el('div','empty','Nothing here yet. Add things you always have.'));return}
+  S.pantry.forEach((t,i)=>{
+    const r=el('div','item');r.append(el('div','',t));
+    const x=el('button','x','×');x.setAttribute('aria-label','Remove');
+    x.onclick=()=>{S.pantry.splice(i,1);save();renderPantry()};
+    r.append(x);box.append(r);
+  });
+}
+const pAdd=()=>{const t=$('pantryIn').value.trim();if(!t)return;
+  if(!S.pantry.some(p=>norm(p)===norm(t)))S.pantry.push(t);
+  $('pantryIn').value='';save();renderPantry()};
+$('pAdd').onclick=pAdd;
+$('pantryIn').addEventListener('keydown',e=>{if(e.key==='Enter')pAdd()});
 function saveDinner(name,ing,url){
   S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',picked:false});
   save();renderDinners();
@@ -367,13 +395,14 @@ async function startCloud(){
   try{
     const [A,F]=await Promise.all([import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')]);
     const ref=F.doc(F.getFirestore(A.initializeApp(FB)),'lists',code);
-    let lastD='',lastG='';
+    let lastD='',lastG='',lastP='';
     cloudPush=()=>{
-      const d=JSON.stringify(S.dinners),g=JSON.stringify(S.groceries),p={};
+      const d=JSON.stringify(S.dinners),g=JSON.stringify(S.groceries),pp=JSON.stringify(S.pantry),p={};
       if(d!==lastD){p.dinners=d;lastD=d}
       if(g!==lastG){p.groceries=g;lastG=g}
+      if(pp!==lastP){p.pantry=pp;lastP=pp}
       if(!Object.keys(p).length)return;
-      F.setDoc(ref,p,{merge:true}).then(()=>setSync('\u2601\ufe0f Synced')).catch(()=>{lastD='';lastG='';setSync('\u26a0\ufe0f Couldn\u2019t save. Check your connection.')});
+      F.setDoc(ref,p,{merge:true}).then(()=>setSync('\u2601\ufe0f Synced')).catch(()=>{lastD='';lastG='';lastP='';setSync('\u26a0\ufe0f Couldn\u2019t save. Check your connection.')});
     };
     F.onSnapshot(ref,snap=>{
       if(snap.metadata.hasPendingWrites)return;
@@ -381,14 +410,16 @@ async function startCloud(){
       const x=snap.data();let ch=false;
       if(typeof x.dinners==='string'&&x.dinners!==lastD){try{const v=JSON.parse(x.dinners);if(Array.isArray(v)){v.forEach(d=>{d.picked=!!d.picked;d.ingredients=d.ingredients||[]});S.dinners=v;lastD=x.dinners;ch=true}}catch(e){}}
       if(typeof x.groceries==='string'&&x.groceries!==lastG){try{const v=JSON.parse(x.groceries);if(Array.isArray(v)){v.forEach(g=>{g.src=g.src||[]});S.groceries=v;lastG=x.groceries;ch=true}}catch(e){}}
-      if(ch){S.seeded=1;saveLocal();renderDinners();renderGroceries()}
+      if(typeof x.pantry==='string'&&x.pantry!==lastP){try{const v=JSON.parse(x.pantry);if(Array.isArray(v)){S.pantry=v;lastP=x.pantry;ch=true}}catch(e){}}
+      else if(typeof x.pantry!=='string')cloudPush();
+      if(ch){S.seeded=1;saveLocal();renderDinners();renderGroceries();renderPantry()}
       setSync('\u2601\ufe0f Synced');
     },()=>setSync('\u26a0\ufe0f Sync problem. Using this phone only.'));
   }catch(e){setSync('\u26a0\ufe0f Couldn\u2019t connect. Using this phone only.')}
 }
 startCloud();
 
-renderDinners();renderGroceries();
+renderDinners();renderGroceries();renderPantry();
 </script>
 </body>
 </html>
