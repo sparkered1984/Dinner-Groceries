@@ -23,6 +23,7 @@ h2{font-size:15px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;
 .row{display:flex;gap:8px;margin-bottom:10px}
 input[type=text],input[type=url],textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text)}
 textarea{min-height:70px;resize:vertical}
+#dIng{min-height:220px}
 .btn{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:600;background:var(--accent);color:var(--accent-text);white-space:nowrap}
 .btn:disabled{opacity:.5}
 .btn.ghost{background:none;color:var(--accent);padding:6px 8px;font-size:15px}
@@ -171,7 +172,7 @@ function renderDinners(){
     };
     r.append(pb);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
-    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();$('addModal').classList.remove('hidden');mTab(false)};
+    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();$('addModal').classList.remove('hidden');mTab(false);const ta=$('dIng');ta.style.height='auto';ta.style.height=Math.max(220,ta.scrollHeight+4)+'px'};
     const x=el('button','btn ghost','Delete');
     x.onclick=()=>{if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners()};
     r.append(e,x);c.append(r);box.append(c);
@@ -242,7 +243,7 @@ $('dAdd').onclick=()=>{
   const n=$('dName').value.trim();if(!n)return;
   const ing=$('dIng').value.split('\n').map(s=>s.trim()).filter(Boolean);
   saveDinner(n,ing,$('uIn').value.trim());
-  $('dName').value='';$('dIng').value='';$('uIn').value='';
+  $('dName').value='';$('dIng').value='';$('uIn').value='';$('dIng').style.height='';
 };
 const gAdd=()=>{const t=$('gText').value.trim();if(!t)return;
   if(!S.groceries.some(g=>norm(g.text)===norm(t)&&!g.done))S.groceries.push({id:uid(),text:t,done:false,src:[],manual:true});
