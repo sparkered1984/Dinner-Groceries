@@ -38,6 +38,7 @@ textarea{min-height:70px;resize:vertical}
 .item div{flex:1}.item small{display:block;color:var(--muted);font-size:13px}
 .item.done div{color:var(--done);text-decoration:line-through}
 .x{background:none;border:0;color:var(--muted);font-size:20px;padding:0 4px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10;display:flex;align-items:flex-end;justify-content:center}.modal.hidden{display:none}.sheet{background:var(--bg);width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}.menu h3{margin:0 0 4px;font-size:16px;color:var(--accent)}.mrow{display:flex;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:17px}.mrow:first-of-type{border-top:0}.mrow span{flex:1}
 .gcard{padding:12px 12px 4px}.ghead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}.ghead h3{margin:0;font-size:18px;color:var(--accent)}.ghead span{color:var(--muted);font-size:13px}.gcard .item{background:var(--bg)}
 .empty{color:var(--muted);text-align:center;padding:24px 0}
 .hidden{display:none}
@@ -54,14 +55,17 @@ a{color:var(--accent)}
  <section id="dinners">
   <h1>Dinners</h1>
   <p class="status">Tap the circle on a dinner to put it on this week’s menu. Its ingredients go to the Groceries tab.</p>
-  <h2>Add from a website</h2>
+  <button class="btn" id="addOpen" style="width:100%;margin-bottom:12px">+ Add a dinner</button>
+  <div id="menuBox"></div>
+  <div id="addModal" class="modal hidden"><div class="sheet"><div class="bar"><b style="color:var(--text);font-size:19px">Add a dinner</b><button class="btn ghost" id="addClose">Close</button></div><div class="row"><button class="btn" id="mWeb" style="flex:1">From a website</button><button class="btn ghost" id="mHand" style="flex:1">By hand</button></div><div id="webPane">
   <div class="row"><input type="url" id="uIn" placeholder="Paste a recipe link" autocapitalize="off"><button class="btn" id="uGo">Get recipe</button></div>
   <div id="uStat" class="status hidden"></div>
   <div id="pasteBox" class="hidden"><textarea id="pText" placeholder="Paste the recipe text here"></textarea><div class="row" style="margin-top:8px"><button class="btn" id="pGo" style="flex:1">Extract ingredients</button></div></div>
-  <h2>Or add by hand</h2>
+  </div><div id="handPane" class="hidden">
   <input type="text" id="dName" placeholder="Dinner name" style="margin-bottom:8px">
   <textarea id="dIng" placeholder="Ingredients, one per line"></textarea>
   <div class="row" style="margin-top:8px"><button class="btn" id="dAdd" style="flex:1">Save dinner</button></div>
+  </div></div></div>
   <h2>Your dinners</h2>
   <input type="text" id="dSearch" placeholder="Search dinners" style="margin-bottom:10px">
   <div id="dList"></div>
@@ -121,10 +125,22 @@ function setPicked(d,on){
   save();renderDinners();renderGroceries();
 }
 
+function mTab(w){$('webPane').classList.toggle('hidden',!w);$('handPane').classList.toggle('hidden',w);$('mWeb').className='btn'+(w?'':' ghost');$('mHand').className='btn'+(w?' ghost':'')}
+$('addOpen').onclick=()=>{$('addModal').classList.remove('hidden');mTab(true)};
+$('addClose').onclick=()=>$('addModal').classList.add('hidden');
+$('addModal').onclick=e=>{if(e.target.id==='addModal')$('addModal').classList.add('hidden')};
+$('mWeb').onclick=()=>mTab(true);$('mHand').onclick=()=>mTab(false);
+function renderMenu(){
+  const b=$('menuBox');b.replaceChildren();
+  const p=S.dinners.filter(d=>d.picked);if(!p.length)return;
+  const c=el('div','card menu');c.append(el('h3','','This week’s menu'));
+  p.forEach(d=>{const r=el('div','mrow');r.append(el('span','',d.name));const x=el('button','x','×');x.setAttribute('aria-label','Remove from menu');x.onclick=()=>setPicked(d,false);r.append(x);c.append(r)});
+  b.append(c);
+}
 const openIng=new Set();
 function renderDinners(){
-  const box=$('dList');box.replaceChildren();
-  const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q));
+  const box=$('dList');box.replaceChildren();renderMenu();
+  const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q)).sort((a,b)=>(b.picked?1:0)-(a.picked?1:0));
   if(!list.length){box.append(el('div','empty',S.dinners.length?'No match.':'No dinners yet.'));return}
   list.forEach(d=>{
     const c=el('div','card'+(d.picked?' sel':''));
@@ -155,7 +171,7 @@ function renderDinners(){
     };
     r.append(pb);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
-    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
+    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();$('addModal').classList.remove('hidden');mTab(false)};
     const x=el('button','btn ghost','Delete');
     x.onclick=()=>{if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners()};
     r.append(e,x);c.append(r);box.append(c);
@@ -218,6 +234,7 @@ const pAdd=()=>{const t=$('pantryIn').value.trim();if(!t)return;
 $('pAdd').onclick=pAdd;
 $('pantryIn').addEventListener('keydown',e=>{if(e.key==='Enter')pAdd()});
 function saveDinner(name,ing,url){
+  $('addModal').classList.add('hidden');toast('Added “'+name.trim()+'” ✓');
   S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',picked:false});
   save();renderDinners();
 }
