@@ -38,6 +38,7 @@ textarea{min-height:70px;resize:vertical}
 .item div{flex:1}.item small{display:block;color:var(--muted);font-size:13px}
 .item.done div{color:var(--done);text-decoration:line-through}
 .x{background:none;border:0;color:var(--muted);font-size:20px;padding:0 4px}
+.gcard{padding:12px 12px 4px}.ghead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}.ghead h3{margin:0;font-size:18px;color:var(--accent)}.ghead span{color:var(--muted);font-size:13px}.gcard .item{background:var(--bg)}
 .empty{color:var(--muted);text-align:center;padding:24px 0}
 .hidden{display:none}
 .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:var(--muted);font-size:15px}
@@ -161,21 +162,43 @@ function renderDinners(){
   });
 }
 
+const CATS=['Produce','Dry Goods','Canned food','Bulk Food','Meats/Cheese','Dairy','Frozen','Breads','Other'];
+const RULES=[
+['Frozen',/frozen|ice cream|popsicle/],
+['Canned food',/\bcans?\b|canned|broth|\bstock\b|tomato paste|tomato sauce|crushed tomato|diced tomato|coconut milk|chickpeas|kidney bean|black bean|water chestnut|bamboo shoot/],
+['Dry Goods',/peanut butter|almond butter|fish sauce|soy sauce|hoisin|sriracha|sweet chili|ketchup|mustard|mayo|vinegar|\boil\b|oil$|dressing|bitters|\brum\b|shrub|\bwine\b/],
+['Breads',/\b(bread|buns?|rolls?|tortillas?|pita|naan|bagels?|baguette|english muffins?|ciabatta)\b/],
+['Dairy',/cream cheese|sour cream|\bcream\b|butter|milk|yogurt|\beggs?\b|egg whites?|egg yolks?|half and half|half & half|buttermilk|ghee/],
+['Meats/Cheese',/chicken|beef|pork|bacon|sausage|salmon|tuna|shrimp|steak|\bham\b|turkey|lamb|meat|prosciutto|pancetta|tofu|cheese|parmesan|parmigiano|cheddar|mozzarella|feta|paneer|ricotta|mascarpone|gruyere|pecorino|halloumi/],
+['Bulk Food',/\bsalt\b|(ground|black|white|cracked|cayenne) pepper|^pepper$|cumin|paprika|chili powder|cinnamon|nutmeg|oregano|\bsage\b|thyme|rosemary|turmeric|coriander|cayenne|garlic powder|onion powder|ground ginger|curry|garam masala|spice|seasoning|honey|bay leaf|bay leaves|dried|red pepper flakes|pepper flakes|cardamom|cloves?\b.*ground|sesame seeds|poppy seed|vanilla|baking (powder|soda)|cornstarch|yeast|maple syrup|sugar/],
+['Produce',/lettuce|spinach|arugula|kale|cabbage|cilantro|parsley|dill|mint|basil|\bonions?\b|shallots?|scallions?|green onions?|garlic|ginger|lemons?|limes?|oranges?|apples?|tomato|cucumber|carrots?|celery|potato|squash|pumpkin|eggplant|zucchini|mushroom|broccoli|cauliflower|bell pepper|jalape|chiles?|chilies|habanero|avocado|beets?|radish|corn|peas|green beans|asparagus|fennel|leek|herbs?|bean sprouts|sprouts|berries|banana|grapes|lemongrass|cabbage|salad|greens|thai basil|capers?/],
+['Dry Goods',/rice|pasta|noodles?|spaghetti|penne|gnocchi|tortellini|flour|oats?|panko|bread ?crumbs?|beans|lentils|quinoa|cashews?|peanuts?|almonds?|walnuts?|pecans?|nuts|chips|crackers?|chocolate|cocoa|wild rice|couscous|rice paper|wrappers?|mix|cereal/]
+];
+function catOf(t){const x=String(t).toLowerCase();for(const [c,re] of RULES)if(re.test(x))return c;return 'Other'}
+function groceryItem(g){
+  const i=el('div','item'+(g.done?' done':''));
+  const cb=document.createElement('input');cb.type='checkbox';cb.checked=g.done;
+  cb.onchange=()=>{g.done=cb.checked;save();renderGroceries()};
+  const mid=el('div','',g.text);
+  const names=g.src.map(id=>(S.dinners.find(d=>d.id===id)||{}).name).filter(Boolean);
+  if(names.length)mid.append(el('small','','for '+names.join(', ')));
+  const x=el('button','x','×');x.setAttribute('aria-label','Remove');
+  x.onclick=()=>{S.groceries=S.groceries.filter(v=>v.id!==g.id);save();renderGroceries()};
+  i.append(cb,mid,x);return i;
+}
 function renderGroceries(){
   const box=$('gList');box.replaceChildren();
   const left=S.groceries.filter(g=>!g.done).length;
   $('gCount').textContent=S.groceries.length?left+' to buy':'';
   if(!S.groceries.length){box.append(el('div','empty','Nothing here yet. Pick a dinner or add an item.'));return}
-  [...S.groceries].sort((a,b)=>a.done-b.done).forEach(g=>{
-    const i=el('div','item'+(g.done?' done':''));
-    const cb=document.createElement('input');cb.type='checkbox';cb.checked=g.done;
-    cb.onchange=()=>{g.done=cb.checked;save();renderGroceries()};
-    const mid=el('div','',g.text);
-    const names=g.src.map(id=>(S.dinners.find(d=>d.id===id)||{}).name).filter(Boolean);
-    if(names.length)mid.append(el('small','','for '+names.join(', ')));
-    const x=el('button','x','×');x.setAttribute('aria-label','Remove');
-    x.onclick=()=>{S.groceries=S.groceries.filter(v=>v.id!==g.id);save();renderGroceries()};
-    i.append(cb,mid,x);box.append(i);
+  const by={};CATS.forEach(c=>by[c]=[]);
+  S.groceries.forEach(g=>by[catOf(g.text)].push(g));
+  CATS.forEach(c=>{
+    const items=by[c];if(!items.length)return;
+    items.sort((a,b)=>a.done-b.done||a.text.localeCompare(b.text));
+    const card=el('div','card gcard');
+    const h=el('div','ghead');h.append(el('h3','',c),el('span','',items.filter(g=>!g.done).length+' to buy'));
+    card.append(h);items.forEach(g=>card.append(groceryItem(g)));box.append(card);
   });
 }
 
