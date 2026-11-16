@@ -23,7 +23,6 @@ h2{font-size:15px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;
 .row{display:flex;gap:8px;margin-bottom:10px}
 input[type=text],input[type=url],textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text)}
 textarea{min-height:70px;resize:vertical}
-#dIng{min-height:220px}
 .btn{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:600;background:var(--accent);color:var(--accent-text);white-space:nowrap}
 .btn:disabled{opacity:.5}
 .btn.ghost{background:none;color:var(--accent);padding:6px 8px;font-size:15px}
@@ -39,14 +38,20 @@ textarea{min-height:70px;resize:vertical}
 .item div{flex:1}.item small{display:block;color:var(--muted);font-size:13px}
 .item.done div{color:var(--done);text-decoration:line-through}
 .x{background:none;border:0;color:var(--muted);font-size:20px;padding:0 4px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10;display:flex;align-items:flex-end;justify-content:center}.modal.hidden{display:none}.sheet{background:var(--bg);width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}.menu h3{margin:0 0 4px;font-size:16px;color:var(--accent)}.mrow{display:flex;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:17px}.mrow:first-of-type{border-top:0}.mrow span{flex:1}
-.gcard{padding:12px 12px 4px}.ghead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}.ghead h3{margin:0;font-size:18px;color:var(--accent)}.ghead span{color:var(--muted);font-size:13px}.gcard .item{background:var(--bg)}
 .empty{color:var(--muted);text-align:center;padding:24px 0}
 .hidden{display:none}
 .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:var(--muted);font-size:15px}
 .status{font-size:15px;color:var(--muted);margin:0 0 10px}
 .status.err{color:var(--accent)}
 a{color:var(--accent)}
+.item.sel{border-color:var(--accent);background:var(--soft)}
+.item .pick{margin-left:4px}
+.star{background:none;border:0;font-size:24px;line-height:1;color:var(--accent);padding:0 2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.chip{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:4px 6px 4px 12px}
+.chip.sel{border-color:var(--accent);background:var(--soft)}
+.chip .cn{background:none;border:0;color:var(--text);font:inherit;font-size:15px;padding:4px 0}
+.tabs button{font-size:13px!important}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:15px;z-index:5;text-align:center}
 </style>
 </head>
@@ -56,17 +61,14 @@ a{color:var(--accent)}
  <section id="dinners">
   <h1>Dinners</h1>
   <p class="status">Tap the circle on a dinner to put it on this week’s menu. Its ingredients go to the Groceries tab.</p>
-  <button class="btn" id="addOpen" style="width:100%;margin-bottom:12px">+ Add a dinner</button>
-  <div id="menuBox"></div>
-  <div id="addModal" class="modal hidden"><div class="sheet"><div class="bar"><b style="color:var(--text);font-size:19px">Add a dinner</b><button class="btn ghost" id="addClose">Close</button></div><div class="row"><button class="btn" id="mWeb" style="flex:1">From a website</button><button class="btn ghost" id="mHand" style="flex:1">By hand</button></div><div id="webPane">
+  <h2>Add from a website</h2>
   <div class="row"><input type="url" id="uIn" placeholder="Paste a recipe link" autocapitalize="off"><button class="btn" id="uGo">Get recipe</button></div>
   <div id="uStat" class="status hidden"></div>
   <div id="pasteBox" class="hidden"><textarea id="pText" placeholder="Paste the recipe text here"></textarea><div class="row" style="margin-top:8px"><button class="btn" id="pGo" style="flex:1">Extract ingredients</button></div></div>
-  </div><div id="handPane" class="hidden">
+  <h2>Or add by hand</h2>
   <input type="text" id="dName" placeholder="Dinner name" style="margin-bottom:8px">
   <textarea id="dIng" placeholder="Ingredients, one per line"></textarea>
   <div class="row" style="margin-top:8px"><button class="btn" id="dAdd" style="flex:1">Save dinner</button></div>
-  </div></div></div>
   <h2>Your dinners</h2>
   <input type="text" id="dSearch" placeholder="Search dinners" style="margin-bottom:10px">
   <div id="dList"></div>
@@ -77,6 +79,15 @@ a{color:var(--accent)}
   <div class="row"><input type="text" id="pantryIn" placeholder="Add a pantry item" enterkeyhint="done" autocapitalize="sentences"><button class="btn" id="pAdd">Add</button></div>
   <div id="pList"></div>
  </section>
+ <section id="menu" class="hidden">
+  <h1>Dinner List</h1>
+  <p class="status">Tap the circle to put a dinner on this week’s menu. Tap ☆ to save it as a favorite (that doesn’t add it to the menu or groceries).</p>
+  <h2>Favorites</h2>
+  <div id="favBox" class="chips"></div>
+  <h2>All dinners</h2>
+  <input type="text" id="mSearch" placeholder="Search dinners" style="margin-bottom:10px">
+  <div id="mList"></div>
+ </section>
  <section id="groceries" class="hidden">
   <h1>Groceries</h1>
   <div class="row"><input type="text" id="gText" placeholder="Add an item" enterkeyhint="done"><button class="btn" id="gAdd">Add</button></div>
@@ -85,7 +96,7 @@ a{color:var(--accent)}
  </section>
 </main>
 <div id="toast" class="toast hidden"></div>
-<nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t2">🛒 Groceries</button><button id="t3">🧂 Pantry</button></nav>
+<nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t4">📋 Dinner List</button><button id="t2">🛒 Groceries</button><button id="t3">🧂 Pantry</button></nav>
 <script>
 let S={dinners:[],groceries:[]};
 try{const r=localStorage.getItem('dg-state2')||localStorage.getItem('dg-state');if(r)S=JSON.parse(r)}catch(e){}
@@ -102,15 +113,15 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 const norm=s=>s.trim().toLowerCase();
 
-function show(n){['dinners','groceries','pantry'].forEach((id,i)=>{$(id).classList.toggle('hidden',n!==i+1);$('t'+(i+1)).classList.toggle('on',n===i+1)})}
-$('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);$('t3').onclick=()=>show(3);
+function show(n){['dinners','groceries','pantry','menu'].forEach((id,i)=>{$(id).classList.toggle('hidden',n!==i+1);$('t'+(i+1)).classList.toggle('on',n===i+1)})}
+$('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);$('t3').onclick=()=>show(3);$('t4').onclick=()=>show(4);
 
 /* menu selection -> grocery list */
 const sn=x=>x.toLowerCase().replace(/\b(ground|black|kosher|sea|fine|coarse|table|freshly)\b/g,' ').replace(/\s+/g,' ').trim();
 function isStaple(t){const n=sn(cleanIng(t)[0]||t);return !!n&&S.pantry.some(p=>sn(p)===n)}
 function setPicked(d,on){
   d.picked=on;
-  if(on){
+  if(on){d.pickedAt=Date.now();
     let skipped=0;
     d.ingredients.forEach(t=>{
       if(isStaple(t)){skipped++;return}
@@ -125,23 +136,33 @@ function setPicked(d,on){
   }
   save();renderDinners();renderGroceries();
 }
-
-function mTab(w){$('webPane').classList.toggle('hidden',!w);$('handPane').classList.toggle('hidden',w);$('mWeb').className='btn'+(w?'':' ghost');$('mHand').className='btn'+(w?' ghost':'')}
-$('addOpen').onclick=()=>{$('addModal').classList.remove('hidden');mTab(true)};
-$('addClose').onclick=()=>$('addModal').classList.add('hidden');
-$('addModal').onclick=e=>{if(e.target.id==='addModal')$('addModal').classList.add('hidden')};
-$('mWeb').onclick=()=>mTab(true);$('mHand').onclick=()=>mTab(false);
+const byPicked=(a,b)=>(b.pickedAt||0)-(a.pickedAt||0);
 function renderMenu(){
-  const b=$('menuBox');b.replaceChildren();
-  const p=S.dinners.filter(d=>d.picked);if(!p.length)return;
-  const c=el('div','card menu');c.append(el('h3','','This week’s menu'));
-  p.forEach(d=>{const r=el('div','mrow');r.append(el('span','',d.name));const x=el('button','x','×');x.setAttribute('aria-label','Remove from menu');x.onclick=()=>setPicked(d,false);r.append(x);c.append(r)});
-  b.append(c);
+  const fb=$('favBox');fb.replaceChildren();
+  const favs=S.dinners.filter(d=>d.fav);
+  if(!favs.length)fb.append(el('div','empty','No favorites yet. Tap ☆ on a dinner below.'));
+  favs.forEach(d=>{const c=el('div','chip'+(d.picked?' sel':''));
+    const n=el('button','cn',d.name);n.onclick=()=>setPicked(d,!d.picked);
+    const x=el('button','star','★');x.setAttribute('aria-label','Remove favorite');x.onclick=()=>{d.fav=false;save();renderMenu()};
+    c.append(n,x);fb.append(c)});
+  const box=$('mList');box.replaceChildren();
+  const q=norm($('mSearch').value);
+  const list=S.dinners.filter(d=>norm(d.name).includes(q)).sort(byPicked);
+  if(!list.length){box.append(el('div','empty',S.dinners.length?'No match.':'No dinners yet.'));return}
+  list.forEach(d=>{
+    const r=el('div','item'+(d.picked?' sel':''));
+    const st=el('button','star',d.fav?'★':'☆');st.setAttribute('aria-label','Favorite');st.onclick=()=>{d.fav=!d.fav;save();renderMenu()};
+    const p=el('button','pick',d.picked?'✓':'');p.setAttribute('aria-label','Add to menu');p.onclick=()=>setPicked(d,!d.picked);
+    r.append(el('div','',d.name),st,p);box.append(r);
+  });
 }
+$('mSearch').addEventListener('input',renderMenu);
+
 const openIng=new Set();
 function renderDinners(){
-  const box=$('dList');box.replaceChildren();renderMenu();
-  const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q)).sort((a,b)=>(b.picked?1:0)-(a.picked?1:0));
+  renderMenu();
+  const box=$('dList');box.replaceChildren();
+  const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q)).sort(byPicked);
   if(!list.length){box.append(el('div','empty',S.dinners.length?'No match.':'No dinners yet.'));return}
   list.forEach(d=>{
     const c=el('div','card'+(d.picked?' sel':''));
@@ -172,50 +193,28 @@ function renderDinners(){
     };
     r.append(pb);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
-    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();$('addModal').classList.remove('hidden');mTab(false);const ta=$('dIng');ta.style.height='auto';ta.style.height=Math.max(220,ta.scrollHeight+4)+'px'};
+    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
     const x=el('button','btn ghost','Delete');
     x.onclick=()=>{if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners()};
     r.append(e,x);c.append(r);box.append(c);
   });
 }
 
-const CATS=['Produce','Dry Goods','Canned food','Bulk Food','Meats/Cheese','Dairy','Frozen','Breads','Other'];
-const RULES=[
-['Frozen',/frozen|ice cream|popsicle/],
-['Canned food',/\bcans?\b|canned|broth|\bstock\b|tomato paste|tomato sauce|crushed tomato|diced tomato|coconut milk|chickpeas|kidney bean|black bean|water chestnut|bamboo shoot/],
-['Dry Goods',/peanut butter|almond butter|fish sauce|soy sauce|hoisin|sriracha|sweet chili|ketchup|mustard|mayo|vinegar|\boil\b|oil$|dressing|bitters|\brum\b|shrub|\bwine\b/],
-['Breads',/\b(bread|buns?|rolls?|tortillas?|pita|naan|bagels?|baguette|english muffins?|ciabatta)\b/],
-['Dairy',/cream cheese|sour cream|\bcream\b|butter|milk|yogurt|\beggs?\b|egg whites?|egg yolks?|half and half|half & half|buttermilk|ghee/],
-['Meats/Cheese',/chicken|beef|pork|bacon|sausage|salmon|tuna|shrimp|steak|\bham\b|turkey|lamb|meat|prosciutto|pancetta|tofu|cheese|parmesan|parmigiano|cheddar|mozzarella|feta|paneer|ricotta|mascarpone|gruyere|pecorino|halloumi/],
-['Bulk Food',/\bsalt\b|(ground|black|white|cracked|cayenne) pepper|^pepper$|cumin|paprika|chili powder|cinnamon|nutmeg|oregano|\bsage\b|thyme|rosemary|turmeric|coriander|cayenne|garlic powder|onion powder|ground ginger|curry|garam masala|spice|seasoning|honey|bay leaf|bay leaves|dried|red pepper flakes|pepper flakes|cardamom|cloves?\b.*ground|sesame seeds|poppy seed|vanilla|baking (powder|soda)|cornstarch|yeast|maple syrup|sugar/],
-['Produce',/lettuce|spinach|arugula|kale|cabbage|cilantro|parsley|dill|mint|basil|\bonions?\b|shallots?|scallions?|green onions?|garlic|ginger|lemons?|limes?|oranges?|apples?|tomato|cucumber|carrots?|celery|potato|squash|pumpkin|eggplant|zucchini|mushroom|broccoli|cauliflower|bell pepper|jalape|chiles?|chilies|habanero|avocado|beets?|radish|corn|peas|green beans|asparagus|fennel|leek|herbs?|bean sprouts|sprouts|berries|banana|grapes|lemongrass|cabbage|salad|greens|thai basil|capers?/],
-['Dry Goods',/rice|pasta|noodles?|spaghetti|penne|gnocchi|tortellini|flour|oats?|panko|bread ?crumbs?|beans|lentils|quinoa|cashews?|peanuts?|almonds?|walnuts?|pecans?|nuts|chips|crackers?|chocolate|cocoa|wild rice|couscous|rice paper|wrappers?|mix|cereal/]
-];
-function catOf(t){const x=String(t).toLowerCase();for(const [c,re] of RULES)if(re.test(x))return c;return 'Other'}
-function groceryItem(g){
-  const i=el('div','item'+(g.done?' done':''));
-  const cb=document.createElement('input');cb.type='checkbox';cb.checked=g.done;
-  cb.onchange=()=>{g.done=cb.checked;save();renderGroceries()};
-  const mid=el('div','',g.text);
-  const names=g.src.map(id=>(S.dinners.find(d=>d.id===id)||{}).name).filter(Boolean);
-  if(names.length)mid.append(el('small','','for '+names.join(', ')));
-  const x=el('button','x','×');x.setAttribute('aria-label','Remove');
-  x.onclick=()=>{S.groceries=S.groceries.filter(v=>v.id!==g.id);save();renderGroceries()};
-  i.append(cb,mid,x);return i;
-}
 function renderGroceries(){
   const box=$('gList');box.replaceChildren();
   const left=S.groceries.filter(g=>!g.done).length;
   $('gCount').textContent=S.groceries.length?left+' to buy':'';
   if(!S.groceries.length){box.append(el('div','empty','Nothing here yet. Pick a dinner or add an item.'));return}
-  const by={};CATS.forEach(c=>by[c]=[]);
-  S.groceries.forEach(g=>by[catOf(g.text)].push(g));
-  CATS.forEach(c=>{
-    const items=by[c];if(!items.length)return;
-    items.sort((a,b)=>a.done-b.done||a.text.localeCompare(b.text));
-    const card=el('div','card gcard');
-    const h=el('div','ghead');h.append(el('h3','',c),el('span','',items.filter(g=>!g.done).length+' to buy'));
-    card.append(h);items.forEach(g=>card.append(groceryItem(g)));box.append(card);
+  [...S.groceries].sort((a,b)=>a.done-b.done).forEach(g=>{
+    const i=el('div','item'+(g.done?' done':''));
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=g.done;
+    cb.onchange=()=>{g.done=cb.checked;save();renderGroceries()};
+    const mid=el('div','',g.text);
+    const names=g.src.map(id=>(S.dinners.find(d=>d.id===id)||{}).name).filter(Boolean);
+    if(names.length)mid.append(el('small','','for '+names.join(', ')));
+    const x=el('button','x','×');x.setAttribute('aria-label','Remove');
+    x.onclick=()=>{S.groceries=S.groceries.filter(v=>v.id!==g.id);save();renderGroceries()};
+    i.append(cb,mid,x);box.append(i);
   });
 }
 
@@ -235,7 +234,6 @@ const pAdd=()=>{const t=$('pantryIn').value.trim();if(!t)return;
 $('pAdd').onclick=pAdd;
 $('pantryIn').addEventListener('keydown',e=>{if(e.key==='Enter')pAdd()});
 function saveDinner(name,ing,url){
-  $('addModal').classList.add('hidden');toast('Added “'+name.trim()+'” ✓');
   S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',picked:false});
   save();renderDinners();
 }
@@ -243,7 +241,7 @@ $('dAdd').onclick=()=>{
   const n=$('dName').value.trim();if(!n)return;
   const ing=$('dIng').value.split('\n').map(s=>s.trim()).filter(Boolean);
   saveDinner(n,ing,$('uIn').value.trim());
-  $('dName').value='';$('dIng').value='';$('uIn').value='';$('dIng').style.height='';
+  $('dName').value='';$('dIng').value='';$('uIn').value='';
 };
 const gAdd=()=>{const t=$('gText').value.trim();if(!t)return;
   if(!S.groceries.some(g=>norm(g.text)===norm(t)&&!g.done))S.groceries.push({id:uid(),text:t,done:false,src:[],manual:true});
