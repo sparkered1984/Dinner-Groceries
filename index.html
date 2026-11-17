@@ -67,6 +67,7 @@ a{color:var(--accent)}
   <div id="pasteBox" class="hidden"><textarea id="pText" placeholder="Paste the recipe text here"></textarea><div class="row" style="margin-top:8px"><button class="btn" id="pGo" style="flex:1">Extract ingredients</button></div></div>
   <h2>Or add by hand</h2>
   <input type="text" id="dName" placeholder="Dinner name" style="margin-bottom:8px">
+  <input type="url" id="dUrl" placeholder="Website link (optional)" autocapitalize="off" style="margin-bottom:8px">
   <textarea id="dIng" placeholder="Ingredients, one per line"></textarea>
   <div class="row" style="margin-top:8px"><button class="btn" id="dAdd" style="flex:1">Save dinner</button></div>
   <h2>Your dinners</h2>
@@ -158,7 +159,14 @@ function renderMenu(){
 }
 $('mSearch').addEventListener('input',renderMenu);
 
-const openIng=new Set();
+const openIng=new Set(),openDir=new Set();
+function dirBits(d){
+  const open=openDir.has(d.id);
+  const b=el('button','btn ghost',(open?'Hide':'Show')+' directions');b.style.padding='8px 0 0 14px';
+  const p=el('p','',d.directions);p.style.whiteSpace='pre-wrap';if(!open)p.classList.add('hidden');
+  b.onclick=()=>{const h=p.classList.toggle('hidden');if(h)openDir.delete(d.id);else openDir.add(d.id);b.textContent=(h?'Show':'Hide')+' directions'};
+  return [b,p];
+}
 function renderDinners(){
   renderMenu();
   const box=$('dList');box.replaceChildren();
@@ -176,7 +184,11 @@ function renderDinners(){
       const ip=el('p','',d.ingredients.join(', '));if(!open)ip.classList.add('hidden');
       tg.onclick=()=>{const h=ip.classList.toggle('hidden');if(h)openIng.delete(d.id);else openIng.add(d.id);tg.textContent=(h?'Show':'Hide')+' ingredients ('+n+')'};
       c.append(tg,ip);
-    }else c.append(el('p','','No ingredients yet. Use Paste ingredients to add them.'));
+      if(d.directions){const [db,dp]=dirBits(d);tg.after(db);ip.after(dp)}
+    }else{
+      c.append(el('p','','No ingredients yet. Use Paste ingredients to add them.'));
+      if(d.directions)c.append(...dirBits(d));
+    }
     const r=el('div','row');r.style.marginBottom='0';
     if(d.url){const a=el('a','','View recipe');a.href=d.url;a.target='_blank';a.rel='noopener';a.style.cssText='padding:6px 8px;font-size:15px';r.append(a)}
     r.style.flexWrap='wrap';
@@ -192,8 +204,19 @@ function renderDinners(){
       rr.append(go,cn);b.append(t,pv,rr);c.insertBefore(b,r);t.focus();
     };
     r.append(pb);
+    const pd=el('button','btn ghost',d.directions?'📝 Edit directions':'📝 Paste directions');
+    pd.onclick=()=>{
+      if(c.querySelector('.pbox'))return;
+      const b=el('div','pbox');const t=document.createElement('textarea');
+      t.placeholder='Paste the recipe directions';t.style.minHeight='140px';t.value=d.directions||'';
+      const rr=el('div','row');const go=el('button','btn','Save directions');go.style.flex='1';
+      go.onclick=()=>{const v=t.value.trim();d.directions=v;save();renderDinners();toast(v?'Directions saved to '+d.name+' ✓':'Directions removed')};
+      const cn=el('button','btn ghost','Cancel');cn.onclick=()=>b.remove();
+      rr.append(go,cn);b.append(t,rr);c.insertBefore(b,r);t.focus();
+    };
+    r.append(pd);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
-    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
+    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('dUrl').value=d.url||'';pendingDir=d.directions||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
     const x=el('button','btn ghost','Delete');
     x.onclick=()=>{if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners()};
     r.append(e,x);c.append(r);box.append(c);
@@ -233,15 +256,16 @@ const pAdd=()=>{const t=$('pantryIn').value.trim();if(!t)return;
   $('pantryIn').value='';save();renderPantry()};
 $('pAdd').onclick=pAdd;
 $('pantryIn').addEventListener('keydown',e=>{if(e.key==='Enter')pAdd()});
+let pendingDir='';
 function saveDinner(name,ing,url){
-  S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',picked:false});
+  S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',directions:pendingDir,picked:false});pendingDir='';
   save();renderDinners();
 }
 $('dAdd').onclick=()=>{
   const n=$('dName').value.trim();if(!n)return;
   const ing=$('dIng').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  saveDinner(n,ing,$('uIn').value.trim());
-  $('dName').value='';$('dIng').value='';$('uIn').value='';
+  saveDinner(n,ing,$('dUrl').value.trim());
+  $('dName').value='';$('dIng').value='';$('dUrl').value='';
 };
 const gAdd=()=>{const t=$('gText').value.trim();if(!t)return;
   if(!S.groceries.some(g=>norm(g.text)===norm(t)&&!g.done))S.groceries.push({id:uid(),text:t,done:false,src:[],manual:true});
