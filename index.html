@@ -18,7 +18,7 @@ main{max-width:560px;margin:0 auto;padding:16px 16px 96px}
 h1{font-size:28px;margin:8px 0 14px}
 h2{font-size:15px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-.tabs button{flex:1;padding:14px 0;border:0;background:none;color:var(--muted);font-size:15px;font-weight:600}
+.tabs button{flex:1;padding:14px 0;border:0;background:none;color:var(--muted);font-size:13px;font-weight:600}
 .tabs button.on{color:var(--accent)}
 .row{display:flex;gap:8px;margin-bottom:10px}
 input[type=text],input[type=url],textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text)}
@@ -38,20 +38,15 @@ textarea{min-height:70px;resize:vertical}
 .item div{flex:1}.item small{display:block;color:var(--muted);font-size:13px}
 .item.done div{color:var(--done);text-decoration:line-through}
 .x{background:none;border:0;color:var(--muted);font-size:20px;padding:0 4px}
+.star{background:none;border:0;font-size:26px;line-height:1;padding:0 4px;color:var(--muted);flex:none}.star.on{color:var(--accent)}
+.item.sel{border-color:var(--accent);background:var(--soft)}
+.item .pick{flex:none}
 .empty{color:var(--muted);text-align:center;padding:24px 0}
 .hidden{display:none}
 .bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:var(--muted);font-size:15px}
 .status{font-size:15px;color:var(--muted);margin:0 0 10px}
 .status.err{color:var(--accent)}
 a{color:var(--accent)}
-.item.sel{border-color:var(--accent);background:var(--soft)}
-.item .pick{margin-left:4px}
-.star{background:none;border:0;font-size:24px;line-height:1;color:var(--accent);padding:0 2px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
-.chip{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:4px 6px 4px 12px}
-.chip.sel{border-color:var(--accent);background:var(--soft)}
-.chip .cn{background:none;border:0;color:var(--text);font:inherit;font-size:15px;padding:4px 0}
-.tabs button{font-size:13px!important}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:15px;z-index:5;text-align:center}
 </style>
 </head>
@@ -62,32 +57,30 @@ a{color:var(--accent)}
   <h1>Dinners</h1>
   <p class="status">Tap the circle on a dinner to put it on this week’s menu. Its ingredients go to the Groceries tab.</p>
   <h2>Add from a website</h2>
-  <div class="row"><input type="url" id="uIn" placeholder="Paste a recipe link" autocapitalize="off"><button class="btn" id="uGo">Get recipe</button><button class="hidden" id="uGoOld"></button></div>
+  <div class="row"><input type="url" id="uIn" placeholder="Paste a recipe link" autocapitalize="off"><button class="btn" id="uGo">Get recipe</button></div>
   <div id="uStat" class="status hidden"></div>
   <div id="pasteBox" class="hidden"><textarea id="pText" placeholder="Paste the recipe text here"></textarea><div class="row" style="margin-top:8px"><button class="btn" id="pGo" style="flex:1">Extract ingredients</button></div></div>
   <h2>Or add by hand</h2>
   <input type="text" id="dName" placeholder="Dinner name" style="margin-bottom:8px">
-  <input type="url" id="dUrl" placeholder="Website link (optional)" autocapitalize="off" style="margin-bottom:8px">
-  <textarea id="dIng" placeholder="Ingredients, one per line"></textarea>
+  <textarea id="dIng" placeholder="Ingredients, one per line" style="min-height:220px"></textarea>
+  <textarea id="dDir" placeholder="Directions (optional)" style="min-height:220px;margin-top:8px"></textarea>
   <div class="row" style="margin-top:8px"><button class="btn" id="dAdd" style="flex:1">Save dinner</button></div>
   <h2>Your dinners</h2>
   <input type="text" id="dSearch" placeholder="Search dinners" style="margin-bottom:10px">
   <div id="dList"></div>
+ </section>
+ <section id="dlist" class="hidden">
+  <h1>Dinner List</h1>
+  <p class="status">Tap ☆ to make a dinner a favorite. Tap the circle to put it on this week’s menu.</p>
+  <input type="text" id="lSearch" placeholder="Search dinners" style="margin-bottom:10px">
+  <div class="row"><button class="btn" id="lAll" style="flex:1">All</button><button class="btn ghost" id="lFav" style="flex:1">★ Favorites</button></div>
+  <div id="lList"></div>
  </section>
  <section id="pantry" class="hidden">
   <h1>Pantry</h1>
   <p class="status">Things you always have. They won’t be added to Groceries when you pick a dinner. An item only matches itself, so “Pepper” won’t skip “Bell pepper”, and “Olive oil” and “Sesame oil” are separate.</p>
   <div class="row"><input type="text" id="pantryIn" placeholder="Add a pantry item" enterkeyhint="done" autocapitalize="sentences"><button class="btn" id="pAdd">Add</button></div>
   <div id="pList"></div>
- </section>
- <section id="menu" class="hidden">
-  <h1>Dinner List</h1>
-  <p class="status">Tap the circle to put a dinner on this week’s menu. Tap ☆ to save it as a favorite (that doesn’t add it to the menu or groceries).</p>
-  <h2>Favorites</h2>
-  <div id="favBox" class="chips"></div>
-  <h2>All dinners</h2>
-  <input type="text" id="mSearch" placeholder="Search dinners" style="margin-bottom:10px">
-  <div id="mList"></div>
  </section>
  <section id="groceries" class="hidden">
   <h1>Groceries</h1>
@@ -97,7 +90,7 @@ a{color:var(--accent)}
  </section>
 </main>
 <div id="toast" class="toast hidden"></div>
-<nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t4">📋 Dinner List</button><button id="t2">🛒 Groceries</button><button id="t3">🧂 Pantry</button></nav>
+<nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t2">📋 Dinner List</button><button id="t3">🛒 Groceries</button><button id="t4">🧂 Pantry</button></nav>
 <script>
 let S={dinners:[],groceries:[]};
 try{const r=localStorage.getItem('dg-state2')||localStorage.getItem('dg-state');if(r)S=JSON.parse(r)}catch(e){}
@@ -114,7 +107,155 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 const norm=s=>s.trim().toLowerCase();
 
-function show(n){['dinners','groceries','pantry','menu'].forEach((id,i)=>{$(id).classList.toggle('hidden',n!==i+1);$('t'+(i+1)).classList.toggle('on',n===i+1)})}
+/* grocery categories (list lives in grocery-categories.txt) */
+const CATTXT=`# GROCERY CATEGORY LIST
+# Format: a [Category] header, then items separated by commas (new lines are fine too).
+# Lines starting with # are ignored. Plurals are handled automatically (apple = apples).
+# Matching rule: the LONGEST matching phrase wins, so "peanut butter" (Condiments)
+# beats "butter" (Dairy), and "ground beef" (Meat) beats "beef".
+# If a grocery item says "can/canned" it goes to Canned; "frozen" sends produce/meat/seafood/bread to Frozen.
+# Anything not found lands in "Other". Add your own words anywhere.
+# Aisle order in the app = the order of the headers below.
+
+[Produce]
+apple, green apple, granny smith apple, honeycrisp apple, gala apple, fuji apple, pink lady apple, pear, bosc pear, anjou pear, asian pear, banana, plantain, orange, navel orange, blood orange, cara cara orange, mandarin, clementine, tangerine, satsuma, grapefruit, pomelo, lemon, meyer lemon, lime, key lime, kumquat, grape, red grapes, green grapes, strawberry, blueberry, raspberry, blackberry, cranberry, cherry, peach, nectarine, plum, apricot, pluot, mango, papaya, pineapple, kiwi, watermelon, cantaloupe, honeydew, melon, pomegranate, fig, medjool date, persimmon, passion fruit, guava, lychee, dragon fruit, starfruit, coconut, avocado, rhubarb, quince, fruit salad, cut fruit
+lettuce, romaine, romaine lettuce, iceberg lettuce, butter lettuce, bibb lettuce, red leaf lettuce, green leaf lettuce, little gem, spring mix, mixed greens, salad greens, salad mix, salad kit, coleslaw mix, arugula, baby arugula, spinach, baby spinach, kale, lacinato kale, curly kale, baby kale, collard greens, chard, swiss chard, bok choy, baby bok choy, napa cabbage, cabbage, green cabbage, red cabbage, savoy cabbage, brussels sprouts, broccoli, broccolini, broccoli florets, cauliflower, cauliflower florets, romanesco, celery, celery root, celeriac, carrot, baby carrots, rainbow carrots, parsnip, turnip, rutabaga, radish, daikon, beet, beetroot, golden beet, cucumber, english cucumber, persian cucumber, zucchini, yellow squash, summer squash, butternut squash, acorn squash, spaghetti squash, delicata squash, kabocha, pumpkin, sweet potato, yam, potato, russet potato, yukon gold potato, red potato, baby potatoes, fingerling potatoes, purple potato, onion, yellow onion, white onion, red onion, sweet onion, vidalia onion, pearl onion, shallot, green onion, scallion, spring onion, leek, garlic, garlic clove, clove garlic, clove of garlic, garlic cloves, garlic head, ginger, fresh ginger, ginger root, turmeric root, horseradish root
+bell pepper, red bell pepper, green bell pepper, yellow bell pepper, orange bell pepper, red pepper, green pepper, yellow pepper, orange pepper, sweet pepper, mini sweet peppers, jalapeno, serrano, serrano pepper, habanero, poblano, anaheim pepper, thai chili, fresno chili, banana pepper, shishito pepper, chili pepper, hot pepper, tomato, roma tomato, cherry tomato, grape tomato, heirloom tomato, beefsteak tomato, vine tomato, campari tomato, tomatillo, eggplant, japanese eggplant, okra, corn, corn on the cob, sweet corn, ear of corn, green bean, string bean, haricot vert, snap pea, snow pea, sugar snap pea, pea, asparagus, artichoke, fennel, fennel bulb, endive, radicchio, watercress, bean sprouts, alfalfa sprouts, sprouts, microgreens, jicama, kohlrabi, lemongrass, galangal, kaffir lime leaves, lime leaves, curry leaves, guacamole
+mushroom, button mushroom, white mushroom, cremini mushroom, baby bella mushroom, portobello, portobello mushroom, shiitake, shiitake mushroom, oyster mushroom, enoki, enoki mushroom, king oyster mushroom, maitake, chanterelle, morel, mushroom blend
+cilantro, parsley, flat leaf parsley, italian parsley, curly parsley, basil, thai basil, holy basil, mint, spearmint, peppermint, dill, chives, fresh thyme, fresh rosemary, fresh sage, fresh oregano, fresh tarragon, fresh marjoram, fresh bay leaves, herbs, fresh herbs, shiso, perilla, vietnamese coriander, rau ram
+tofu, firm tofu, extra firm tofu, soft tofu, silken tofu, tempeh, seitan, wonton wrappers, egg roll wrappers, dumpling wrappers, gyoza wrappers, fresh noodles
+
+[Meat]
+beef, ground beef, lean ground beef, ground chuck, ground sirloin, ground round, steak, ribeye, ribeye steak, rib eye, new york strip, ny strip, strip steak, kansas city strip, sirloin, sirloin steak, top sirloin, filet mignon, filet, tenderloin, beef tenderloin, chateaubriand, tri tip, flank steak, skirt steak, hanger steak, flat iron steak, t bone steak, porterhouse, chuck roast, chuck eye steak, chuck eye, chuck steak, chuck, pot roast, brisket, beef brisket, short ribs, beef short ribs, beef ribs, prime rib, rib roast, standing rib roast, round roast, eye of round, bottom round, top round, rump roast, london broil, stew meat, beef stew meat, cube steak, minute steak, beef cheeks, oxtail, beef shank, beef bones, marrow bones, beef liver, liver, tongue, bulgogi beef, bulgogi, shaved beef, sliced beef, shabu shabu beef, thinly sliced beef, philly steak, steak strips, stir fry beef, corned beef, pastrami, roast beef, deli roast beef, beef patties, burger patties, hamburger patties, hamburger meat, hamburger
+pork, ground pork, pork chop, pork chops, bone in pork chop, pork loin, pork tenderloin, pork shoulder, pork butt, boston butt, pork belly, pork ribs, baby back ribs, spare ribs, st louis ribs, country style ribs, pork roast, pork cutlet, pork steak, pork shank, pork hock, pork neck bones, pork sausage, ham, spiral ham, ham steak, deli ham, honey ham, black forest ham, prosciutto, pancetta, guanciale, bacon, thick cut bacon, center cut bacon, turkey bacon, canadian bacon, bacon bits, bacon pieces, salt pork, ham hock, smoked ham hock, lard
+sausage, italian sausage, mild italian sausage, hot italian sausage, sweet italian sausage, breakfast sausage, sausage links, sausage patties, sausage roll, bratwurst, brat, kielbasa, andouille, andouille sausage, chorizo, mexican chorizo, smoked sausage, chicken sausage, turkey sausage, apple chicken sausage, hot dog, hot dogs, frankfurter, wiener, salami, genoa salami, soppressata, pepperoni, mortadella, bologna, summer sausage, liverwurst, pate, lunch meat, deli meat, cold cuts, sliced turkey, deli turkey, deli chicken, meatballs, meatloaf mix
+lamb, ground lamb, lamb chop, lamb chops, leg of lamb, lamb shank, rack of lamb, lamb shoulder, lamb stew meat, lamb loin, goat, goat meat, veal, veal cutlet, ground veal, veal chop, veal shank, osso buco, venison, bison, ground bison, buffalo meat, rabbit, elk, wild boar
+chicken, whole chicken, chicken breast, chicken breasts, boneless skinless chicken breast, bone in chicken breast, split chicken breast, chicken thigh, chicken thighs, boneless skinless chicken thigh, bone in chicken thigh, chicken drumstick, drumstick, drumsticks, chicken wing, chicken wings, wing, wings, chicken leg, chicken legs, chicken leg quarters, chicken quarters, chicken tender, chicken tenders, chicken tenderloins, chicken cutlet, chicken cutlets, thin sliced chicken breast, ground chicken, rotisserie chicken, chicken liver, chicken gizzard, chicken hearts, chicken feet, chicken carcass, cornish hen, chicken strips, diced chicken, cooked chicken, shredded chicken
+turkey, ground turkey, turkey breast, turkey thigh, turkey leg, turkey drumstick, turkey wings, whole turkey, turkey tenderloin, turkey cutlet, turkey roast, duck, duck breast, duck leg, whole duck, ground duck, goose, quail, pheasant, cornish game hen
+
+[Seafood]
+fish, white fish, whitefish, fish fillet, fish fillets, salmon, salmon fillet, salmon filet, atlantic salmon, sockeye salmon, king salmon, coho salmon, wild salmon, smoked salmon, lox, salmon steak, tuna, ahi tuna, tuna steak, yellowfin tuna, bluefin tuna, sushi grade tuna, cod, cod fillet, black cod, sablefish, halibut, tilapia, mahi mahi, mahi, swordfish, sea bass, chilean sea bass, branzino, snapper, red snapper, trout, rainbow trout, steelhead, catfish, haddock, pollock, flounder, sole, dover sole, grouper, arctic char, mackerel, herring, eel, unagi, perch, walleye, bass, striped bass, barramundi, monkfish, skate, whole fish, sushi grade fish, poke
+shrimp, large shrimp, jumbo shrimp, extra large shrimp, medium shrimp, raw shrimp, cooked shrimp, peeled shrimp, deveined shrimp, tail on shrimp, tail off shrimp, shell on shrimp, prawns, prawn, tiger prawns, lobster, lobster tail, lobster tails, crab, crab meat, crabmeat, lump crab, lump crab meat, king crab, snow crab, dungeness crab, blue crab, crab legs, crab claws, imitation crab, surimi, scallop, scallops, sea scallops, bay scallops, clam, clams, littleneck clams, mussel, mussels, oyster, oysters, squid, calamari, octopus, cuttlefish, crawfish, crayfish, langoustine, caviar, roe, salmon roe, ikura, tobiko, uni, sea urchin
+
+[Dairy]
+milk, whole milk, skim milk, 2% milk, 1% milk, reduced fat milk, low fat milk, nonfat milk, fat free milk, lactose free milk, raw milk, organic milk, buttermilk, chocolate milk, half and half, half & half, half n half, heavy cream, heavy whipping cream, whipping cream, whipped cream, light cream, light whipping cream, cream, sour cream, light sour cream, creme fraiche, mexican crema, crema, clotted cream
+butter, salted butter, unsalted butter, sweet cream butter, european butter, irish butter, cultured butter, grass fed butter, whipped butter, butter sticks, butter stick, clarified butter, ghee, margarine, buttery spread, plant butter, vegan butter, almond milk, oat milk, soy milk, cashew milk, rice milk, pea milk, hemp milk, macadamia milk, flax milk, unsweetened almond milk, vanilla almond milk, creamer, coffee creamer, oat creamer, almond creamer, plant milk
+yogurt, greek yogurt, plain yogurt, vanilla yogurt, plain greek yogurt, nonfat greek yogurt, whole milk yogurt, coconut yogurt, skyr, kefir, cottage cheese, ricotta, ricotta cheese, whole milk ricotta, cream cheese, whipped cream cheese, neufchatel, mascarpone, quark, labneh, tzatziki, hummus, queso dip, spinach dip
+cheese, cheddar, cheddar cheese, sharp cheddar, white cheddar, mild cheddar, extra sharp cheddar, colby, colby jack, monterey jack, pepper jack, mozzarella, mozzarella cheese, fresh mozzarella, shredded mozzarella, low moisture mozzarella, mozzarella balls, ciliegine, burrata, parmesan, parmesan cheese, parmigiano reggiano, parmigiano, grated parmesan, shredded parmesan, pecorino, pecorino romano, romano, romano cheese, grana padano, asiago, provolone, swiss cheese, swiss, gruyere, emmental, jarlsberg, gouda, smoked gouda, fontina, havarti, muenster, brie, camembert, blue cheese, gorgonzola, roquefort, stilton, feta, feta cheese, goat cheese, chevre, halloumi, paneer, queso fresco, cotija, oaxaca cheese, queso blanco, queso oaxaca, american cheese, cheese slices, sliced cheese, shredded cheese, grated cheese, mexican blend cheese, mexican cheese, italian blend cheese, four cheese blend, string cheese, cheese sticks, cheese curds, boursin, manchego, taleggio, raclette, cheese spread, laughing cow, babybel, velveeta, cheese sauce, cheese block
+egg, eggs, large eggs, medium eggs, jumbo eggs, brown eggs, white eggs, free range eggs, cage free eggs, pasture raised eggs, organic eggs, egg whites, egg white, egg yolks, egg yolk, liquid egg whites, egg substitute, egg beaters, hard boiled eggs, dozen eggs, duck eggs, quail eggs
+# --- plant milk and creamer brands ---
+silk, silk almond milk, silk oat milk, oatly, oatly barista, planet oat, ripple milk, califia, califia farms, almond breeze, blue diamond almond milk, elmhurst, good karma, nutpods, coffee mate, coffee-mate, international delight, chobani creamer, chobani oat, fairlife, fairlife milk, lactaid, horizon milk, organic valley milk, eggnog, egg nog, kefir milk, drinkable yogurt, danimals, yoplait, chobani, oikos, fage, siggis, activia, dannon, noosa, stonyfield, icelandic provisions, two good yogurt, light and fit, gogurt, go-gurt, tubes yogurt, yogurt tubes, yogurt cups, yoghurt
+
+[Frozen]
+frozen peas, frozen corn, frozen broccoli, frozen spinach, frozen green beans, frozen mixed vegetables, frozen vegetables, frozen stir fry vegetables, frozen cauliflower, frozen cauliflower rice, frozen riced cauliflower, frozen edamame, edamame, frozen brussels sprouts, frozen carrots, frozen peas and carrots, frozen okra, frozen squash, frozen butternut squash, frozen zucchini, frozen onions, frozen peppers, frozen pepper strips, frozen stir fry, frozen veggies, frozen collard greens, frozen kale, frozen artichoke hearts, frozen cut corn, frozen lima beans, frozen sweet corn
+frozen berries, frozen strawberries, frozen blueberries, frozen raspberries, frozen blackberries, frozen mixed berries, frozen mango, frozen pineapple, frozen cherries, frozen peaches, frozen banana, frozen bananas, frozen fruit, frozen acai, acai packs, smoothie packs, frozen avocado, frozen mango chunks, frozen dragon fruit
+frozen pizza, pizza, pizza rolls, french fries, fries, frozen fries, crinkle fries, steak fries, shoestring fries, waffle fries, tater tots, tots, hash browns, frozen hash browns, hashbrowns, sweet potato fries, onion rings, mozzarella sticks, jalapeno poppers, frozen appetizers, frozen waffles, waffles, frozen pancakes, frozen french toast, breakfast sandwiches, frozen breakfast burritos
+ice cream, vanilla ice cream, chocolate ice cream, gelato, sorbet, sherbet, frozen yogurt, popsicles, popsicle, ice pops, ice cream sandwiches, ice cream bars, ice cream cones, frozen novelties, frozen treats, frozen custard, ice, ice cubes, bag of ice, dry ice, cool whip, whipped topping, frozen whipped topping, frozen cookie dough, cookie dough, frozen pie, frozen cake, frozen desserts
+frozen dinner, frozen meal, frozen meals, frozen entree, tv dinner, frozen burrito, burritos, frozen enchiladas, frozen lasagna, frozen mac and cheese, frozen dumplings, dumplings, potstickers, gyoza, frozen gyoza, frozen egg rolls, frozen spring rolls, frozen bao, bao buns, frozen soup dumplings, frozen meatballs, chicken nuggets, nuggets, frozen chicken nuggets, frozen chicken tenders, frozen chicken patties, frozen chicken wings, fish sticks, fish fingers, fish sandwiches, frozen fish, frozen fish fillets, frozen salmon, frozen shrimp, frozen scallops, frozen crab, frozen lobster, frozen calamari, frozen chicken, frozen chicken breast, frozen ground beef, frozen turkey, frozen burger patties, veggie burgers, frozen veggie burgers, impossible burger, beyond burger, plant based burger, veggie patties, frozen falafel, frozen tofu
+frozen pie crust, puff pastry, puff pastry sheets, frozen puff pastry, phyllo dough, phyllo, filo dough, frozen biscuits, frozen bread dough, frozen rolls, frozen garlic bread, frozen naan, frozen paratha, frozen tortillas, frozen pizza crust, frozen pizza dough, frozen cinnamon rolls, frozen pastry, frozen empanadas, frozen pierogies, pierogi, frozen ravioli, frozen tortellini, frozen gnocchi, frozen rice, frozen cooked rice, frozen quinoa, frozen cooked chicken, frozen pesto, frozen herbs, frozen garlic, frozen ginger, frozen chopped onion, frozen orange juice concentrate, juice concentrate
+
+[Bakery]
+bread, white bread, wheat bread, whole wheat bread, whole grain bread, sourdough, sourdough bread, baguette, ciabatta, focaccia, brioche, rye bread, pumpernickel, multigrain bread, sandwich bread, sliced bread, texas toast, french bread, italian bread, garlic bread, artisan bread, bread loaf, loaf of bread, gluten free bread, challah, naan, pita, pita bread, pita pockets, flatbread, lavash, tortilla, tortillas, flour tortilla, flour tortillas, corn tortilla, corn tortillas, burrito tortillas, taco tortillas, fajita tortillas, whole wheat tortillas, low carb tortillas, wraps, tortilla wraps, sandwich wraps
+bagel, bagels, english muffin, english muffins, croissant, croissants, roll, rolls, dinner rolls, crusty rolls, kaiser rolls, sub rolls, hoagie rolls, hawaiian rolls, hamburger buns, burger buns, hot dog buns, brioche buns, slider buns, buns, potato buns, pretzel buns, pretzel rolls, pretzel, soft pretzel, biscuits, refrigerated biscuits, crescent rolls, cinnamon rolls, pizza dough, pizza crust, fresh pizza dough, refrigerated pie crust, pie crust, pie shell, naan bread
+muffin, muffins, donut, donuts, doughnut, doughnuts, danish, scone, scones, cake, cupcake, cupcakes, cookies, cookie, brownie, brownies, pie, bakery cake, birthday cake, cheesecake, pastry, pastries, coffee cake, banana bread, pound cake, angel food cake, sponge cake, ladyfingers, shortcake, cake rounds, bakery cookies
+
+[Bulk]
+rice, white rice, brown rice, jasmine rice, basmati rice, arborio rice, sushi rice, wild rice, sticky rice, glutinous rice, long grain rice, short grain rice, medium grain rice, black rice, forbidden rice, red rice, instant rice, minute rice, parboiled rice, converted rice, quinoa, red quinoa, couscous, pearl couscous, israeli couscous, bulgur, farro, barley, pearl barley, millet, buckwheat, kasha, freekeh, amaranth, teff, sorghum, polenta, cornmeal, grits, stone ground grits, hominy grits, oats, rolled oats, old fashioned oats, steel cut oats, quick oats, oat bran, oatmeal, granola, muesli, wheat berries, bulgur wheat, wheat germ, wheat bran, bran
+flour, all purpose flour, ap flour, bread flour, whole wheat flour, white whole wheat flour, cake flour, pastry flour, self rising flour, almond flour, coconut flour, rye flour, spelt flour, oat flour, rice flour, chickpea flour, gluten free flour, semolina, semolina flour, durum flour, masa harina, masa, corn flour, tapioca flour, vital wheat gluten, sugar, granulated sugar, white sugar, brown sugar, light brown sugar, dark brown sugar, cane sugar, organic sugar, coconut sugar, turbinado sugar, raw sugar, demerara sugar, muscovado sugar, sanding sugar, pearl sugar, rock sugar, caster sugar, superfine sugar, stevia, monk fruit, splenda, sweetener
+beans, dried beans, dry beans, black beans, pinto beans, kidney beans, red beans, navy beans, great northern beans, cannellini beans, white beans, garbanzo beans, chickpeas, lima beans, butter beans, black eyed peas, split peas, green split peas, yellow split peas, lentils, red lentils, green lentils, brown lentils, french lentils, black lentils, beluga lentils, puy lentils, mung beans, adzuki beans, fava beans, cranberry beans, soybeans
+almonds, almond, sliced almonds, slivered almonds, whole almonds, raw almonds, roasted almonds, walnuts, walnut, walnut pieces, pecans, pecan, pecan halves, cashews, cashew, raw cashews, pistachios, pistachio, peanuts, peanut, roasted peanuts, hazelnuts, hazelnut, macadamia nuts, macadamia, brazil nuts, pine nuts, pinenuts, chestnuts, mixed nuts, nuts, chopped nuts, trail mix, sunflower seeds, pumpkin seeds, pepitas, sesame seeds, white sesame seeds, black sesame seeds, chia seeds, chia, flax seeds, flaxseed, ground flaxseed, flax, hemp seeds, hemp hearts, poppy seeds, seeds
+raisins, golden raisins, dried cranberries, craisins, dried apricots, dried mango, dried figs, dried dates, dates, prunes, dried plums, dried cherries, dried blueberries, dried apples, dried pineapple, dried fruit, currants, dried currants, coconut flakes, shredded coconut, unsweetened coconut, sweetened coconut, desiccated coconut, coconut chips, nutritional yeast, dried mushrooms, dried shiitake, dried porcini, popcorn kernels, tapioca, tapioca pearls, boba, sago, psyllium husk, dried beans bulk, bulk
+
+[Canned]
+canned tomatoes, diced tomatoes, crushed tomatoes, whole tomatoes, whole peeled tomatoes, san marzano tomatoes, fire roasted tomatoes, stewed tomatoes, petite diced tomatoes, tomato sauce, tomato paste, tomato puree, passata, strained tomatoes, rotel, diced tomatoes and green chilies
+canned beans, canned black beans, canned kidney beans, canned pinto beans, canned chickpeas, canned cannellini beans, canned white beans, refried beans, baked beans, pork and beans, vegetarian beans, chili beans, canned lentils, canned corn, canned green beans, canned peas, canned carrots, canned potatoes, canned beets, canned mushrooms, canned spinach, canned vegetables, creamed corn, canned pumpkin, pumpkin puree, pumpkin pie filling, sweet potato puree
+canned tuna, tuna can, albacore tuna, chunk light tuna, tuna in oil, tuna in water, canned salmon, sardines, canned sardines, anchovies, anchovy, anchovy fillets, canned mackerel, canned crab, canned clams, canned oysters, canned shrimp, canned chicken, spam, vienna sausages, corned beef hash, canned ham
+canned peaches, canned pears, canned pineapple, pineapple chunks, crushed pineapple, pineapple rings, mandarin oranges, canned mandarin oranges, fruit cocktail, canned fruit, applesauce, unsweetened applesauce, canned cranberry sauce, cranberry sauce, jellied cranberry sauce, pie filling, apple pie filling, cherry pie filling, canned cherries, canned jackfruit, jackfruit, lychee in syrup
+coconut milk, canned coconut milk, full fat coconut milk, light coconut milk, coconut cream, cream of coconut, evaporated milk, sweetened condensed milk, condensed milk, dulce de leche, chicken broth, chicken stock, beef broth, beef stock, vegetable broth, vegetable stock, bone broth, mushroom broth, seafood stock, fish stock, stock, broth, low sodium chicken broth, chicken broth carton, stock concentrate, better than bouillon
+cream of mushroom soup, cream of chicken soup, cream of celery soup, condensed soup, soup, canned soup, tomato soup, chicken noodle soup, french onion soup, clam chowder, chili, canned chili, green chiles, green chilies, diced green chiles, diced green chilies, chipotle in adobo, chipotle peppers, chipotle peppers in adobo, adobo peppers, enchilada sauce, red enchilada sauce, green enchilada sauce, verde sauce
+artichoke hearts, marinated artichoke hearts, hearts of palm, water chestnuts, bamboo shoots, baby corn, straw mushrooms, black olives, green olives, kalamata olives, olives, sliced olives, stuffed olives, castelvetrano olives, roasted red peppers, roasted peppers, pimento, pimentos, pimiento, grape leaves, sauerkraut canned, tomatillos canned
+
+[Condiments]
+ketchup, catsup, mustard, yellow mustard, dijon mustard, dijon, whole grain mustard, stone ground mustard, spicy brown mustard, honey mustard, mayonnaise, mayo, miracle whip, vegan mayo, aioli, garlic aioli, remoulade, tartar sauce, cocktail sauce, relish, pickle relish, sweet relish, pickles, pickle, dill pickles, bread and butter pickles, gherkins, cornichons, pickled jalapenos, pickled ginger, pickled onions, pickled red onions, pickled vegetables, pickled beets, sauerkraut, kimchi, giardiniera, pepperoncini, peppadew, banana peppers jarred, capers, caper berries, tapenade, olive tapenade
+hot sauce, sriracha, tabasco, franks red hot, frank's red hot, cholula, tapatio, valentina, crystal hot sauce, texas pete, sambal oelek, sambal, chili garlic sauce, chili crisp, chili oil, chili paste, chile paste, gochujang, bean paste, doubanjiang, ssamjang, doenjang, harissa, chimichurri, pesto, basil pesto, red pesto, salsa, salsa verde, pico de gallo, taco sauce, buffalo sauce, wing sauce, adobo sauce, jerk sauce, mole, mole sauce, curry sauce, tikka masala sauce, butter chicken sauce, simmer sauce, korma sauce, coconut curry sauce
+soy sauce, low sodium soy sauce, light soy sauce, dark soy sauce, sweet soy sauce, kecap manis, tamari, coconut aminos, liquid aminos, braggs, teriyaki sauce, teriyaki, hoisin sauce, hoisin, oyster sauce, vegetarian oyster sauce, fish sauce, worcestershire sauce, worcestershire, ponzu, ponzu sauce, mirin, sweet chili sauce, thai sweet chili sauce, sweet and sour sauce, duck sauce, plum sauce, black bean sauce, garlic black bean sauce, stir fry sauce, orange sauce, general tso sauce, kung pao sauce, korean bbq sauce, bulgogi sauce, bbq sauce, barbecue sauce, steak sauce, a1 sauce, peanut sauce, satay sauce, tom yum paste, shrimp paste, xo sauce, mushroom sauce, gravy, jarred gravy, ssam sauce, yum yum sauce, katsu sauce, tonkatsu sauce, okonomiyaki sauce, kewpie, kewpie mayo, japanese mayo, wasabi, wasabi paste, prepared horseradish, horseradish sauce, sesame sauce, goma dare, miso, miso paste, white miso, red miso, yellow miso, tahini, tahini paste
+curry paste, red curry paste, green curry paste, yellow curry paste, massaman curry paste, panang curry paste, thai curry paste, laksa paste, rendang paste, tikka paste, vindaloo paste, tandoori paste, harissa paste, tomato chutney, mango chutney, chutney, lime pickle, mint chutney
+marinara sauce, marinara, pasta sauce, spaghetti sauce, jarred pasta sauce, alfredo sauce, jarred alfredo, vodka sauce, pizza sauce, bolognese sauce, arrabbiata sauce, tomato basil sauce, ragu, rao's, white sauce, bechamel, pesto sauce, sun dried tomatoes, sundried tomatoes, sun dried tomato, oil packed sun dried tomatoes
+ranch, ranch dressing, caesar dressing, caesar, italian dressing, balsamic vinaigrette, vinaigrette, salad dressing, dressing, blue cheese dressing, thousand island, french dressing, russian dressing, honey mustard dressing, green goddess dressing, greek dressing, sesame ginger dressing, asian dressing, poppy seed dressing, raspberry vinaigrette, lemon vinaigrette, oil and vinegar
+peanut butter, creamy peanut butter, crunchy peanut butter, natural peanut butter, almond butter, cashew butter, sunflower seed butter, sunbutter, nut butter, nutella, hazelnut spread, chocolate hazelnut spread, cookie butter, biscoff spread, jam, jelly, preserves, fruit preserves, strawberry jam, raspberry jam, grape jelly, apricot jam, orange marmalade, marmalade, fruit spread, apple butter, lemon curd, honey, raw honey, local honey, manuka honey, hot honey, maple syrup, pure maple syrup, syrup, pancake syrup, table syrup, agave, agave nectar, molasses, blackstrap molasses, corn syrup, light corn syrup, dark corn syrup, golden syrup, date syrup, simple syrup, chocolate syrup, caramel sauce, caramel, hot fudge, fudge sauce, butterscotch sauce, lemon juice, lime juice, bottled lemon juice, bottled lime juice, orange juice concentrate, pomegranate molasses, balsamic glaze, balsamic reduction, sweet chili, sweet and spicy sauce
+
+[Pantry]
+olive oil, extra virgin olive oil, evoo, light olive oil, vegetable oil, canola oil, avocado oil, coconut oil, sesame oil, toasted sesame oil, peanut oil, sunflower oil, safflower oil, grapeseed oil, corn oil, walnut oil, truffle oil, frying oil, cooking oil, oil, cooking spray, nonstick spray, pam, olive oil spray, shortening, crisco, lard, tallow, duck fat, vinegar, white vinegar, distilled white vinegar, apple cider vinegar, red wine vinegar, white wine vinegar, balsamic vinegar, balsamic, rice vinegar, rice wine vinegar, seasoned rice vinegar, sherry vinegar, malt vinegar, black vinegar, champagne vinegar, cooking wine, shaoxing wine, rice wine, cooking sherry, marsala wine, sake
+pasta, dried pasta, spaghetti, spaghettini, penne, rigatoni, fusilli, rotini, farfalle, bowtie pasta, bow tie pasta, macaroni, elbow macaroni, linguine, fettuccine, tagliatelle, pappardelle, angel hair, capellini, vermicelli, orzo, ziti, mostaccioli, cavatappi, orecchiette, paccheri, bucatini, campanelle, gemelli, ditalini, small shells, medium shells, lasagna noodles, lasagna, manicotti, shells, jumbo shells, pasta shells, tortellini, ravioli, gnocchi, whole wheat pasta, gluten free pasta, chickpea pasta, egg noodles, wide egg noodles, rice noodles, flat rice noodles, pad thai noodles, rice stick noodles, rice vermicelli, ramen, ramen noodles, instant ramen, instant noodles, cup noodles, udon, udon noodles, soba, soba noodles, lo mein noodles, chow mein noodles, chow mein, glass noodles, cellophane noodles, sweet potato noodles, dangmyeon, somen, shirataki, noodles, mac and cheese, boxed mac and cheese, kraft mac and cheese
+rice cake, rice cakes, tteok, tteokbokki, rice paper, rice paper wrappers, spring roll wrappers, taco shells, hard taco shells, tostada, tostada shells, tostadas, breadcrumbs, bread crumbs, panko, panko breadcrumbs, italian breadcrumbs, croutons, stuffing, stuffing mix, crackers, saltine crackers, saltines, ritz crackers, ritz, graham crackers, water crackers, rice crackers, matzo, matzo meal, matzah, cereal, cheerios, corn flakes, rice krispies, instant oatmeal, pancake mix, waffle mix, bisquick, biscuit mix, cornbread mix, cake mix, brownie mix, muffin mix, soup mix, seasoning packet, nori, seaweed, dried seaweed, roasted seaweed, nori sheets, kombu, wakame, dashi, dashi powder, bonito flakes, katsuobushi, bouillon, bouillon cubes, chicken bouillon, beef bouillon, vegetable bouillon, boullion, stock cubes, protein powder, collagen, shelf stable milk, powdered milk, dry milk, instant mashed potatoes, mashed potato flakes, potato flakes, tater tot mix, hamburger helper, pizza crust mix, polenta tube
+
+[Baking]
+baking soda, bicarbonate of soda, baking powder, yeast, active dry yeast, instant yeast, rapid rise yeast, dry yeast, cornstarch, corn starch, arrowroot, arrowroot powder, tapioca starch, potato starch, cream of tartar, cocoa powder, cocoa, unsweetened cocoa, unsweetened cocoa powder, dutch process cocoa, cacao powder, cacao nibs, chocolate chips, semi sweet chocolate chips, semisweet chocolate chips, dark chocolate chips, white chocolate chips, milk chocolate chips, mini chocolate chips, peanut butter chips, butterscotch chips, cinnamon chips, toffee bits, heath bits, baking chocolate, bittersweet chocolate, semisweet chocolate, unsweetened chocolate, dark chocolate, white chocolate, milk chocolate, chocolate, chocolate bar, chocolate bars, chocolate chunks, candy melts, melting chocolate, chocolate wafers, vanilla extract, vanilla, pure vanilla extract, imitation vanilla, vanilla bean, vanilla beans, vanilla bean paste, almond extract, peppermint extract, lemon extract, orange extract, maple extract, coconut extract, rum extract, food coloring, gel food coloring, sprinkles, nonpareils, edible glitter, powdered sugar, confectioners sugar, icing sugar, powdered sugar glaze, frosting, canned frosting, icing, royal icing, fondant, marzipan, almond paste, marshmallows, mini marshmallows, marshmallow fluff, marshmallow creme, graham cracker crumbs, oreo crumbs, cookie crumbs, gelatin, unflavored gelatin, jello, jell o, gelatin mix, pudding mix, instant pudding, instant pudding mix, cheesecake pudding, custard powder, meringue powder, baking mix, pie spice, cake decorations, cake topper, candles birthday, sweetened shredded coconut baking
+
+[Spices]
+salt, kosher salt, sea salt, table salt, flaky salt, flaky sea salt, maldon salt, himalayan salt, pink salt, pickling salt, garlic salt, onion salt, celery salt, seasoned salt, lawrys, lawry's, pepper, black pepper, ground pepper, ground black pepper, cracked black pepper, freshly ground black pepper, white pepper, ground white pepper, peppercorns, black peppercorns, whole peppercorns, pink peppercorns, sichuan peppercorns, szechuan peppercorns, lemon pepper, red pepper flakes, crushed red pepper, crushed red pepper flakes, chili flakes, chile flakes, cayenne, cayenne pepper, ground cayenne, paprika, smoked paprika, sweet paprika, hungarian paprika, spanish paprika, chili powder, ancho chili powder, ancho powder, chipotle powder, chipotle chili powder, guajillo powder, gochugaru, korean chili flakes, korean red pepper flakes, aleppo pepper, urfa biber, kashmiri chili powder
+cumin, ground cumin, cumin seeds, whole cumin, coriander, ground coriander, coriander seeds, turmeric, ground turmeric, turmeric powder, ginger powder, ground ginger, dried ginger, cinnamon, ground cinnamon, cinnamon sticks, cinnamon stick, ceylon cinnamon, nutmeg, ground nutmeg, whole nutmeg, cloves, ground cloves, whole cloves, allspice, ground allspice, whole allspice, cardamom, cardamom pods, ground cardamom, green cardamom, black cardamom, star anise, anise, anise seed, fennel seeds, fennel seed, ground fennel, fenugreek, fenugreek seeds, kasuri methi, mustard seed, mustard seeds, black mustard seeds, yellow mustard seeds, mustard powder, dry mustard, ground mustard, celery seed, caraway seeds, caraway, nigella seeds, nigella, onion seeds, ajwain, asafoetida, hing, mace, juniper berries, annatto, achiote
+curry powder, madras curry powder, garam masala, tandoori masala, tikka masala powder, chaat masala, sambar powder, rasam powder, biryani masala, chana masala, pav bhaji masala, panch phoron, berbere, za'atar, zaatar, sumac, ras el hanout, baharat, dukkah, herbes de provence, italian seasoning, poultry seasoning, taco seasoning, fajita seasoning, burrito seasoning, cajun seasoning, creole seasoning, blackened seasoning, old bay, old bay seasoning, jerk seasoning, everything bagel seasoning, everything but the bagel, steak seasoning, montreal steak seasoning, grill seasoning, bbq rub, barbecue rub, dry rub, chinese five spice, five spice, five spice powder, pumpkin pie spice, apple pie spice, adobo seasoning, adobo, sazon, sazon goya, ranch seasoning, ranch packet, ranch mix, onion soup mix, dip mix, chili seasoning, meatloaf seasoning, pickling spice, mulling spices, togarashi, shichimi togarashi, furikake, seasoning blend, all purpose seasoning, mrs dash, mrs. dash, tony chachere, tony chacheres, vegeta, msg, accent seasoning, citric acid, liquid smoke, meat tenderizer, wasabi powder
+garlic powder, granulated garlic, onion powder, granulated onion, minced garlic, jarred garlic, minced onion, dried minced onion, onion flakes, dried onion, dried garlic, garlic flakes, dried parsley, parsley flakes, dried basil, dried oregano, oregano, dried thyme, thyme, ground thyme, dried rosemary, rosemary, dried sage, sage, rubbed sage, ground sage, dried dill, dill weed, dried mint, dried chives, dried cilantro, dried tarragon, tarragon, dried marjoram, marjoram, dried savory, savory, dried dill weed, bay leaf, bay leaves, dried bay leaves, dried chili, dried chilies, dried chiles, dried red chilies, dried arbol chiles, chiles de arbol, dried guajillo, guajillo chiles, dried ancho, ancho chiles, dried pasilla, dried chipotle, dried hibiscus, dried lavender, dried orange peel, lemon zest dried, saffron, saffron threads, vanilla powder, lemon peel, orange peel
+
+[Beverages]
+bottled water, spring water, sparkling water, seltzer, club soda, tonic water, mineral water, sparkling mineral water, la croix, lacroix, perrier, topo chico, coconut water, alkaline water, soda, soda water, cola, coke, coca cola, pepsi, diet coke, diet pepsi, coke zero, sprite, 7up, mountain dew, dr pepper, ginger ale, ginger beer, root beer, cream soda, orange soda, lemonade, limeade, iced tea, sweet tea, arnold palmer, orange juice, apple juice, cranberry juice, grape juice, pineapple juice, grapefruit juice, pomegranate juice, tomato juice, vegetable juice, v8, prune juice, juice, juice box, juice boxes, kombucha, kefir drink, drinking yogurt, smoothie, smoothies, tea, black tea, green tea, herbal tea, white tea, oolong tea, earl grey, chamomile tea, peppermint tea, ginger tea, chai, chai tea, tea bags, loose leaf tea, matcha, matcha powder, rooibos, yerba mate
+coffee, ground coffee, coffee beans, whole bean coffee, whole beans, instant coffee, espresso, espresso beans, espresso powder, cold brew, cold brew coffee, k cups, kcups, coffee pods, nespresso pods, decaf coffee, decaf, energy drink, red bull, monster, sports drink, gatorade, powerade, electrolyte drink, protein shake, premier protein, boost, ensure, hot chocolate, hot cocoa, hot cocoa mix, drink mix, powdered drink mix, kool aid, crystal light, lemonade mix, margarita mix, bloody mary mix, sour mix, mixer, mixers
+wine, red wine, white wine, dry white wine, dry red wine, sauvignon blanc, chardonnay, pinot grigio, pinot noir, cabernet, cabernet sauvignon, merlot, malbec, zinfandel, riesling, rose, rose wine, champagne, prosecco, sparkling wine, cava, port, sherry, vermouth, sweet vermouth, dry vermouth, beer, ipa, lager, ale, stout, pilsner, light beer, craft beer, hard cider, cider, hard seltzer, vodka, gin, rum, white rum, dark rum, spiced rum, coconut rum, whiskey, whisky, bourbon, rye whiskey, scotch, irish whiskey, tequila, blanco tequila, reposado, mezcal, brandy, cognac, triple sec, cointreau, grand marnier, amaretto, kahlua, baileys, irish cream, liqueur, campari, aperol, st germain, limoncello, bitters, habanero bitters, angostura bitters, orange bitters, shrub, grenadine, orgeat, cocktail mix, cocktail cherries, maraschino cherries, luxardo cherries, olives for martini
+# --- more drinks: sodas ---
+coca cola, coca-cola, coke classic, cherry coke, vanilla coke, cherry vanilla coke, diet coke, diet cherry coke, coke zero sugar, coca cola zero, mexican coke, mexican coca cola, coke bottles, pepsi cola, pepsi zero sugar, pepsi max, wild cherry pepsi, pepsi throwback, mug root beer, barqs, barq's, a&w root beer, ibc root beer, dads root beer, sprite zero, fanta, fanta orange, fanta grape, mello yello, diet mountain dew, mountain dew baja blast, baja blast, mtn dew, code red, voltage, diet dr pepper, dr. pepper, dr pepper cherry, cherry dr pepper, dr pepper zero, 7 up, sierra mist, starry, sunkist, orange crush, grape crush, crush, squirt, fresca, big red, cheerwine, faygo, jarritos, sidral mundet, inca kola, irn bru, dr brown, dr browns, canada dry, schweppes, seagrams, seagram's ginger ale, vernors, stewarts soda, sprecher, boylan, jones soda, fentimans, reeds ginger beer, fever tree, fever-tree, q mixers, olipop, poppi, culture pop, zevia, humm, kombucha gts, health-ade, brew dr, gt's kombucha, soda pop, pop, diet soda, zero sugar soda, craft soda, cream soda
+# --- waters and seltzers ---
+liquid death, liquid death sparkling, liquid death mountain water, smartwater, smart water, dasani, aquafina, evian, fiji, fiji water, voss, essentia, poland spring, arrowhead, nestle pure life, deer park, ozarka, crystal geyser, icelandic glacial, penta water, core water, hint water, hint, vitaminwater, vitamin water, propel, bai, bai drink, bai antioxidant, coconut water drink, vita coco, zico, harmless harvest, spindrift, bubly, waterloo, waterloo sparkling water, polar seltzer, polar, san pellegrino, pellegrino, gerolsteiner, saratoga, topo chico mineral water, sparkling ice, ice water, la croix sparkling water, aha sparkling water, dirty soda, tonic, seltzer water, sparkling juice, sparkling cider, martinellis, martinelli's, apple cider, fresh cider
+# --- energy and sports ---
+monster energy, monster, monster zero, red bull sugar free, rockstar, bang energy, celsius, celsius energy, reign, reign energy, alani nu, ghost energy, c4 energy, 5 hour energy, 5-hour energy, nos energy, full throttle, venom energy, prime hydration, prime energy, body armor, bodyarmor, gatorade zero, gatorade fit, powerade zero, pedialyte, liquid iv, liquid i.v., nuun, lmnt, ultima replenisher, electrolyte powder, electrolyte tablets, pre workout, preworkout, protein drink, protein water, core power, muscle milk, orgain shake, oikos drink, fairlife shake, slimfast, atkins shake, ensure shake, boost drink
+# --- juice and kids drinks ---
+tropicana, simply orange, simply lemonade, simply apple, simply limeade, minute maid, minute maid lemonade, ocean spray, ocean spray cranberry, cran-grape, cran apple juice, welchs, welch's, welchs grape juice, naked juice, odwalla, bolthouse, bolthouse farms, suja, pressed juicery, evolution fresh, harmless harvest, lakewood juice, old orchard, martinellis juice, santa cruz juice, apple cider juice, tart cherry juice, aloe vera juice, aloe drink, noni juice, beet juice, carrot juice, celery juice, green juice, cold pressed juice, orange juice carton, not from concentrate orange juice, orange juice with pulp, no pulp orange juice, lemon lime soda, capri sun, capri-sun, sunny d, sunnyd, hawaiian punch, hi-c, hi c, kool-aid, kool aid jammers, honest kids, juicy juice, apple and eve, mott's juice, motts, fruit punch, fruit juice, fruit drink, fruit smoothie, smoothie drink, naked smoothie, bolthouse smoothie, pickle juice, clamato, mr and mrs t, zing zang, tomato clam juice
+# --- tea ---
+lipton, lipton tea, pure leaf, pure leaf tea, gold peak, gold peak tea, snapple, arizona tea, arizona iced tea, brisk tea, nestea, honest tea, tazo, bigelow, celestial seasonings, twinings, yogi tea, harney and sons, stash tea, republic of tea, numi, traditional medicinals, throat coat, sleepytime, red zinger, lady grey, english breakfast, english breakfast tea, irish breakfast tea, darjeeling, assam, ceylon tea, jasmine tea, lemon tea, ginger lemon tea, mint tea, hibiscus tea, turmeric tea, bubble tea, boba tea, milk tea, thai tea, thai iced tea, sweet iced tea, unsweetened iced tea, ito en, ito en green tea, teas tea, tea concentrate, tea powder, instant tea, lipton iced tea mix, long island iced tea
+# --- coffee ---
+starbucks, starbucks coffee, starbucks frappuccino, frappuccino, starbucks doubleshot, starbucks cold brew, dunkin, dunkin donuts coffee, folgers, maxwell house, peets, peet's coffee, lavazza, illy, death wish coffee, black rifle coffee, kicking horse, stumptown, intelligentsia, blue bottle, eight o'clock coffee, community coffee, cafe bustelo, bustelo, don francisco, seattles best, caribou coffee, green mountain coffee, tullys, nescafe, folgers instant, taster's choice, medaglia d'oro, bottled coffee, iced coffee, canned coffee, coffee drink, ready to drink coffee, nitro cold brew, nitro coffee, la colombe, la colombe draft latte, chameleon cold brew, califia cold brew, high brew, doubleshot, mocha, latte, oat latte, chai latte, chai concentrate, tazo chai, oregon chai, decaf coffee beans, coffee grounds, french press coffee, drip coffee, turkish coffee, coffee pods, keurig pods, k-cup pods, nespresso, nespresso capsules, tassimo pods, senseo pods, dolce gusto, coffee capsules, coffee singles, coffee sticks, starbucks via, via packets
+# --- hot drinks and mixes ---
+swiss miss, swiss miss hot chocolate, nesquik, nesquik powder, ovaltine, carnation hot chocolate, hot chocolate mix, hot chocolate bombs, cocoa bombs, hot cocoa packets, malted milk powder, horlicks, milo, tang, tang drink mix, country time lemonade, country time, true lemon, mio, mio water enhancer, water enhancer, crystal light packets, propel packets, emergen-c, emergen c, airborne, vitamin drink mix, wyler's, wylers light, kool-aid packets, gatorade powder, powdered lemonade, instant lemonade
+# --- beer, hard seltzer, ciders ---
+budweiser, bud light, coors, coors light, miller lite, miller high life, michelob ultra, busch, busch light, natural light, natty light, pabst, pbr, pabst blue ribbon, keystone, modelo, modelo especial, corona, corona extra, corona light, pacifico, dos equis, tecate, heineken, stella artois, guinness, blue moon, sam adams, samuel adams, sierra nevada, lagunitas, fat tire, new belgium, goose island, founders, bells, bell's brewery, oskar blues, deschutes, odell, new glarus, summit, grain belt, leinenkugel, leinenkugels, shiner bock, yuengling, michelob, amstel light, bass ale, newcastle, kona, kona big wave, 12 pack beer, 6 pack beer, 24 pack beer, case of beer, growler, non alcoholic beer, athletic brewing, o'douls, odouls, heineken 0.0, white claw, truly, truly hard seltzer, high noon, vizzy, bon and viv, topo chico hard seltzer, nutrl, smirnoff ice, mikes hard lemonade, mike's hard, twisted tea, bud light seltzer, angry orchard, strongbow, woodchuck, stella cidre, magners, ace cider, seabright, cutwater, canned cocktail, canned cocktails, rtd cocktail, ready to drink cocktail, hard kombucha, hard tea, hard lemonade, hard iced tea, hard soda
+# --- liquor brands ---
+smirnoff, absolut, grey goose, titos, tito's, tito's handmade vodka, ketel one, svedka, skyy, belvedere, ciroc, new amsterdam, jack daniels, jack daniel's, jim beam, makers mark, maker's mark, woodford reserve, bulleit, buffalo trace, knob creek, wild turkey, four roses, evan williams, crown royal, seagrams vo, fireball, jameson, bushmills, tullamore dew, johnnie walker, glenfiddich, glenlivet, macallan, dewars, chivas regal, captain morgan, bacardi, malibu, kraken, sailor jerry, mount gay, myers's rum, goslings, don q, havana club, patron, jose cuervo, casamigos, don julio, espolon, olmeca, el jimador, 1800 tequila, herradura, sauza, hendricks, hendrick's, tanqueray, bombay sapphire, beefeater, gordons, seagrams gin, aviation gin, empress gin, nolet's, new amsterdam gin, hennessy, remy martin, courvoisier, martell, disaronno, frangelico, chambord, midori, blue curacao, peach schnapps, apple pucker, sour apple pucker, jagermeister, jager, fernet, fernet branca, amaro, aperol spritz, st-germain, elderflower liqueur, creme de menthe, creme de cassis, creme de violette, baileys irish cream, kahlua, tia maria, rumchata, rum chata, everclear, moonshine, sake bottle, soju, jinro, chamisul, hite jinro, makgeolli, baijiu, shochu, ouzo, sambuca, absinthe, pisco, cachaca, aquavit, grappa, schnapps, mini liquor bottles, nip bottles, airplane bottles, bar mix, margarita salt
+
+[Snacks]
+chips, potato chips, kettle chips, tortilla chips, corn chips, pita chips, bagel chips, veggie chips, plantain chips, kale chips, doritos, tostitos, fritos, cheetos, cheese puffs, cheese curls, pringles, ruffles, lays, popcorn, microwave popcorn, bagged popcorn, kettle corn, pretzels, pretzel sticks, pretzel crisps, cheese crackers, goldfish, cheez its, cheez-its, animal crackers, peanut butter crackers, granola bar, granola bars, protein bar, protein bars, energy bar, cereal bar, fruit bar, kind bar, clif bar, rice krispie treats, pop tarts, poptarts, fig newtons, nutter butters, oreos, oreo, chips ahoy, cookies packaged, sandwich cookies, wafer cookies, biscotti, candy, candy bar, gummy bears, gummies, gummy worms, jelly beans, licorice, twizzlers, sour patch, skittles, m&ms, reeses, snickers, kit kat, hershey, hershey bars, hard candy, lollipops, mints, gum, chewing gum, jerky, beef jerky, turkey jerky, meat sticks, slim jim, pork rinds, fruit snacks, fruit leather, fruit cups, applesauce pouches, applesauce cups, pudding cups, jello cups, seaweed snacks, rice cakes snack, puffed rice, puffs, veggie straws, cheese popcorn, nut mix, snack mix, chex mix, bugles, crackers snack
+
+[Household]
+paper towels, paper towel, toilet paper, bathroom tissue, napkins, paper napkins, paper plates, plastic plates, plastic cups, solo cups, plastic forks, plastic utensils, disposable utensils, trash bags, garbage bags, kitchen trash bags, ziploc bags, ziploc, sandwich bags, snack bags, freezer bags, gallon bags, storage bags, aluminum foil, tin foil, foil, plastic wrap, saran wrap, cling wrap, parchment paper, wax paper, butcher paper, cupcake liners, muffin liners, baking cups, coffee filters, toothpicks, skewers, bamboo skewers, straws, paper straws, twine, kitchen twine, dish soap, dawn, dishwasher detergent, dishwasher pods, dishwasher tablets, rinse aid, laundry detergent, laundry pods, tide, fabric softener, dryer sheets, stain remover, bleach, oxiclean, all purpose cleaner, multi surface cleaner, glass cleaner, windex, disinfectant, disinfectant wipes, clorox wipes, lysol, toilet bowl cleaner, bathroom cleaner, floor cleaner, swiffer, mop pads, sponges, sponge, scrub brush, scrubbers, steel wool, dish brush, dish towels, rubber gloves, gloves, air freshener, febreze, candles, candle, matches, lighter, lighters, batteries, aa batteries, aaa batteries, light bulbs, charcoal, lighter fluid, fire starters, ice melt
+hand soap, bar soap, body wash, shampoo, conditioner, toothpaste, toothbrush, floss, mouthwash, deodorant, razors, razor blades, shaving cream, lotion, body lotion, hand lotion, lip balm, chapstick, sunscreen, bug spray, tissues, kleenex, cotton balls, cotton swabs, q tips, makeup remover, face wash, moisturizer, hand sanitizer, band aids, bandaids, first aid, ibuprofen, tylenol, advil, aspirin, allergy medicine, zyrtec, claritin, benadryl, cough drops, vitamins, multivitamin, vitamin c, vitamin d, melatonin, probiotics, feminine products, tampons, pads, diapers, baby wipes, wipes, baby food, formula, baby formula, pet food, dog food, cat food, cat litter, dog treats, cat treats, fish food, bird seed
+`;
+const CATS=[],CATMAP=new Map();let CATMAX=1;
+function sg(w){
+  if(w.length>4&&/ies$/.test(w))return w.slice(0,-3)+'y';
+  if(/(oes|shes|ches|xes|sses|zes)$/.test(w))return w.slice(0,-2);
+  if(/(ss|us|is)$/.test(w)||!/s$/.test(w))return w;
+  return w.slice(0,-1);
+}
+const words=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/['\u2019]/g,'').replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean).map(sg);
+(()=>{let cur=null;
+  CATTXT.split('\n').forEach(l=>{l=l.trim();if(!l||l[0]==='#')return;
+    const m=l.match(/^\[(.+)\]$/);if(m){cur=m[1];CATS.push(cur);return}
+    if(!cur)return;
+    l.split(',').forEach(t=>{const w=words(t);if(!w.length)return;const k=w.join(' ');if(!CATMAP.has(k))CATMAP.set(k,cur);CATMAX=Math.max(CATMAX,w.length)});
+  });
+})();
+const catCache=new Map();
+function catOf(text){
+  const t=String(text);if(catCache.has(t))return catCache.get(t);
+  const w=words(t);let c='Other';
+  find:for(let n=Math.min(CATMAX,w.length);n>0;n--)for(let i=w.length-n;i>=0;i--){
+    const k=w.slice(i,i+n).join(' ');if(CATMAP.has(k)){c=CATMAP.get(k);break find}}
+  const lc=t.toLowerCase();
+  if(/\b(cans?|canned)\b/.test(lc)&&['Bulk','Pantry','Produce'].includes(c))c='Canned';
+  else if(/\bfrozen\b/.test(lc)&&['Produce','Meat','Seafood','Bakery'].includes(c))c='Frozen';
+  catCache.set(t,c);return c;
+}
+
+function show(n){['dinners','dlist','groceries','pantry'].forEach((id,i)=>{$(id).classList.toggle('hidden',n!==i+1);$('t'+(i+1)).classList.toggle('on',n===i+1)})}
 $('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);$('t3').onclick=()=>show(3);$('t4').onclick=()=>show(4);
 
 /* menu selection -> grocery list */
@@ -122,7 +263,7 @@ const sn=x=>x.toLowerCase().replace(/\b(ground|black|kosher|sea|fine|coarse|tabl
 function isStaple(t){const n=sn(cleanIng(t)[0]||t);return !!n&&S.pantry.some(p=>sn(p)===n)}
 function setPicked(d,on){
   d.picked=on;
-  if(on){d.pickedAt=Date.now();
+  if(on){
     let skipped=0;
     d.ingredients.forEach(t=>{
       if(isStaple(t)){skipped++;return}
@@ -137,46 +278,18 @@ function setPicked(d,on){
   }
   save();renderDinners();renderGroceries();
 }
-const byPicked=(a,b)=>(b.pickedAt||0)-(a.pickedAt||0);
-function renderMenu(){
-  const fb=$('favBox');fb.replaceChildren();
-  const favs=S.dinners.filter(d=>d.fav);
-  if(!favs.length)fb.append(el('div','empty','No favorites yet. Tap ☆ on a dinner below.'));
-  favs.forEach(d=>{const c=el('div','chip'+(d.picked?' sel':''));
-    const n=el('button','cn',d.name);n.onclick=()=>setPicked(d,!d.picked);
-    const x=el('button','star','★');x.setAttribute('aria-label','Remove favorite');x.onclick=()=>{d.fav=false;save();renderMenu()};
-    c.append(n,x);fb.append(c)});
-  const box=$('mList');box.replaceChildren();
-  const q=norm($('mSearch').value);
-  const list=S.dinners.filter(d=>norm(d.name).includes(q)).sort(byPicked);
-  if(!list.length){box.append(el('div','empty',S.dinners.length?'No match.':'No dinners yet.'));return}
-  list.forEach(d=>{
-    const r=el('div','item'+(d.picked?' sel':''));
-    const st=el('button','star',d.fav?'★':'☆');st.setAttribute('aria-label','Favorite');st.onclick=()=>{d.fav=!d.fav;save();renderMenu()};
-    const p=el('button','pick',d.picked?'✓':'');p.setAttribute('aria-label','Add to menu');p.onclick=()=>setPicked(d,!d.picked);
-    r.append(el('div','',d.name),st,p);box.append(r);
-  });
-}
-$('mSearch').addEventListener('input',renderMenu);
 
-const openIng=new Set(),openDir=new Set();
-function dirBits(d){
-  const open=openDir.has(d.id);
-  const b=el('button','btn ghost',(open?'Hide':'Show')+' directions');b.style.padding='8px 0 0 14px';
-  const p=el('p','',d.directions);p.style.whiteSpace='pre-wrap';if(!open)p.classList.add('hidden');
-  b.onclick=()=>{const h=p.classList.toggle('hidden');if(h)openDir.delete(d.id);else openDir.add(d.id);b.textContent=(h?'Show':'Hide')+' directions'};
-  return [b,p];
-}
+const openIng=new Set(),openDir=new Set();let keepFav=false,keepDir='';
 function renderDinners(){
-  renderMenu();
   const box=$('dList');box.replaceChildren();
-  const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q)).sort(byPicked);
+  const q=norm($('dSearch').value);const list=S.dinners.filter(d=>norm(d.name).includes(q));
   if(!list.length){box.append(el('div','empty',S.dinners.length?'No match.':'No dinners yet.'));return}
   list.forEach(d=>{
     const c=el('div','card'+(d.picked?' sel':''));
     const top=el('div','top');
     const p=el('button','pick',d.picked?'✓':'');p.setAttribute('aria-label','Add to menu');p.onclick=()=>setPicked(d,!d.picked);
-    top.append(el('h3','',d.name),p);c.append(top);
+    const fs=el('button','star'+(d.fav?' on':''),d.fav?'\u2605':'\u2606');fs.setAttribute('aria-label','Favorite');fs.onclick=()=>toggleFav(d);
+    top.append(el('h3','',d.name),fs,p);c.append(top);
     if(d.note)c.append(el('p','','📝 '+d.note));
     if(d.ingredients.length){
       const open=openIng.has(d.id),n=d.ingredients.length;
@@ -184,10 +297,13 @@ function renderDinners(){
       const ip=el('p','',d.ingredients.join(', '));if(!open)ip.classList.add('hidden');
       tg.onclick=()=>{const h=ip.classList.toggle('hidden');if(h)openIng.delete(d.id);else openIng.add(d.id);tg.textContent=(h?'Show':'Hide')+' ingredients ('+n+')'};
       c.append(tg,ip);
-      if(d.directions){const [db,dp]=dirBits(d);tg.after(db);ip.after(dp)}
-    }else{
-      c.append(el('p','','No ingredients yet. Use Paste ingredients to add them.'));
-      if(d.directions)c.append(...dirBits(d));
+    }else c.append(el('p','','No ingredients yet. Use Paste ingredients to add them.'));
+    if(d.directions){
+      const dopen=openDir.has(d.id);
+      const dt=el('button','btn ghost',(dopen?'Hide':'Show')+' directions');dt.style.padding='8px 0 0';
+      const dp=el('p','',d.directions);dp.style.whiteSpace='pre-wrap';if(!dopen)dp.classList.add('hidden');
+      dt.onclick=()=>{const h=dp.classList.toggle('hidden');if(h)openDir.delete(d.id);else openDir.add(d.id);dt.textContent=(h?'Show':'Hide')+' directions'};
+      c.append(dt,dp);
     }
     const r=el('div','row');r.style.marginBottom='0';
     if(d.url){const a=el('a','','View recipe');a.href=d.url;a.target='_blank';a.rel='noopener';a.style.cssText='padding:6px 8px;font-size:15px';r.append(a)}
@@ -195,7 +311,7 @@ function renderDinners(){
     const pb=el('button','btn ghost','📋 Paste ingredients');
     pb.onclick=()=>{
       if(c.querySelector('.pbox'))return;
-      const b=el('div','pbox');const t=document.createElement('textarea');t.placeholder='Paste the ingredient list from the recipe site';
+      const b=el('div','pbox');const t=document.createElement('textarea');t.placeholder='Paste the ingredient list from the recipe site';t.style.minHeight='200px';
       const pv=el('p','','');
       t.oninput=()=>{const l=cleanIng(t.value);pv.textContent=l.length?'Will add: '+l.join(', '):''};
       const rr=el('div','row');const go=el('button','btn','Add ingredients');go.style.flex='1';
@@ -203,20 +319,18 @@ function renderDinners(){
       const cn=el('button','btn ghost','Cancel');cn.onclick=()=>b.remove();
       rr.append(go,cn);b.append(t,pv,rr);c.insertBefore(b,r);t.focus();
     };
-    r.append(pb);
-    const pd=el('button','btn ghost',d.directions?'📝 Edit directions':'📝 Paste directions');
-    pd.onclick=()=>{
-      if(c.querySelector('.pbox'))return;
-      const b=el('div','pbox');const t=document.createElement('textarea');
-      t.placeholder='Paste the recipe directions';t.style.minHeight='140px';t.value=d.directions||'';
+    const eb=el('button','btn ghost',d.directions?'✏️ Edit directions':'✏️ Add directions');
+    eb.onclick=()=>{
+      if(c.querySelector('.dbox'))return;
+      const b=el('div','dbox');const t=document.createElement('textarea');t.placeholder='Paste or type the directions';t.value=d.directions||'';t.style.minHeight='220px';
       const rr=el('div','row');const go=el('button','btn','Save directions');go.style.flex='1';
-      go.onclick=()=>{const v=t.value.trim();d.directions=v;save();renderDinners();toast(v?'Directions saved to '+d.name+' ✓':'Directions removed')};
+      go.onclick=()=>{d.directions=t.value.trim();if(!d.directions)openDir.delete(d.id);save();renderDinners()};
       const cn=el('button','btn ghost','Cancel');cn.onclick=()=>b.remove();
       rr.append(go,cn);b.append(t,rr);c.insertBefore(b,r);t.focus();
     };
-    r.append(pd);
+    r.append(pb,eb);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
-    e.onclick=()=>{$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('dUrl').value=d.url||'';pendingDir=d.directions||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
+    e.onclick=()=>{keepFav=!!d.fav;keepDir=d.directions||'';$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('dDir').value=d.directions||'';$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
     const x=el('button','btn ghost','Delete');
     x.onclick=()=>{if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners()};
     r.append(e,x);c.append(r);box.append(c);
@@ -228,16 +342,23 @@ function renderGroceries(){
   const left=S.groceries.filter(g=>!g.done).length;
   $('gCount').textContent=S.groceries.length?left+' to buy':'';
   if(!S.groceries.length){box.append(el('div','empty','Nothing here yet. Pick a dinner or add an item.'));return}
-  [...S.groceries].sort((a,b)=>a.done-b.done).forEach(g=>{
-    const i=el('div','item'+(g.done?' done':''));
-    const cb=document.createElement('input');cb.type='checkbox';cb.checked=g.done;
-    cb.onchange=()=>{g.done=cb.checked;save();renderGroceries()};
-    const mid=el('div','',g.text);
-    const names=g.src.map(id=>(S.dinners.find(d=>d.id===id)||{}).name).filter(Boolean);
-    if(names.length)mid.append(el('small','','for '+names.join(', ')));
-    const x=el('button','x','×');x.setAttribute('aria-label','Remove');
-    x.onclick=()=>{S.groceries=S.groceries.filter(v=>v.id!==g.id);save();renderGroceries()};
-    i.append(cb,mid,x);box.append(i);
+  const groups={};
+  S.groceries.forEach(g=>{const c=catOf(g.text);(groups[c]=groups[c]||[]).push(g)});
+  CATS.concat('Other').forEach(c=>{
+    const arr=groups[c];if(!arr)return;
+    arr.sort((a,b)=>a.done-b.done);
+    box.append(el('h2','',c+' ('+arr.filter(g=>!g.done).length+')'));
+    arr.forEach(g=>{
+      const i=el('div','item'+(g.done?' done':''));
+      const cb=document.createElement('input');cb.type='checkbox';cb.checked=g.done;
+      cb.onchange=()=>{g.done=cb.checked;save();renderGroceries()};
+      const mid=el('div','',g.text);
+      const names=g.src.map(id=>(S.dinners.find(d=>d.id===id)||{}).name).filter(Boolean);
+      if(names.length)mid.append(el('small','','for '+names.join(', ')));
+      const x=el('button','x','\u00d7');x.setAttribute('aria-label','Remove');
+      x.onclick=()=>{S.groceries=S.groceries.filter(v=>v.id!==g.id);save();renderGroceries()};
+      i.append(cb,mid,x);box.append(i);
+    });
   });
 }
 
@@ -251,21 +372,44 @@ function renderPantry(){
     r.append(x);box.append(r);
   });
 }
+/* dinner list + favorites */
+let lFavOnly=false;
+function toggleFav(d){d.fav=!d.fav;save();renderDinners()}
+function renderList(){
+  const box=$('lList');box.replaceChildren();
+  $('lAll').className='btn'+(lFavOnly?' ghost':'');$('lFav').className='btn'+(lFavOnly?'':' ghost');
+  const q=norm($('lSearch').value);
+  const list=S.dinners.filter(d=>norm(d.name).includes(q)&&(!lFavOnly||d.fav))
+    .sort((a,b)=>(!!b.fav-!!a.fav)||a.name.localeCompare(b.name));
+  if(!list.length){box.append(el('div','empty',lFavOnly&&!q?'No favorites yet. Tap a \u2606 to add one.':'No match.'));return}
+  let sect=null;
+  list.forEach(d=>{
+    if(!lFavOnly){const t=d.fav?'Favorites':'All dinners';if(t!==sect){sect=t;box.append(el('h2','',t))}}
+    const r=el('div','item'+(d.picked?' sel':''));
+    const nm=el('div','',d.name);if(d.note)nm.append(el('small','',d.note));
+    const st=el('button','star'+(d.fav?' on':''),d.fav?'\u2605':'\u2606');st.setAttribute('aria-label','Favorite');st.onclick=()=>toggleFav(d);
+    const p=el('button','pick',d.picked?'\u2713':'');p.setAttribute('aria-label','Add to menu');p.onclick=()=>setPicked(d,!d.picked);
+    r.append(nm,st,p);box.append(r);
+  });
+}
+const _rd=renderDinners;renderDinners=function(){_rd();renderList()};
+$('lSearch').addEventListener('input',renderList);
+$('lAll').onclick=()=>{lFavOnly=false;renderList()};
+$('lFav').onclick=()=>{lFavOnly=true;renderList()};
 const pAdd=()=>{const t=$('pantryIn').value.trim();if(!t)return;
   if(!S.pantry.some(p=>norm(p)===norm(t)))S.pantry.push(t);
   $('pantryIn').value='';save();renderPantry()};
 $('pAdd').onclick=pAdd;
 $('pantryIn').addEventListener('keydown',e=>{if(e.key==='Enter')pAdd()});
-let pendingDir='';
 function saveDinner(name,ing,url){
-  S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',directions:pendingDir,picked:false});pendingDir='';
+  S.dinners.unshift({id:uid(),name:name.trim(),ingredients:ing,url:url||'',picked:false,fav:keepFav});keepFav=false;
   save();renderDinners();
 }
 $('dAdd').onclick=()=>{
   const n=$('dName').value.trim();if(!n)return;
   const ing=$('dIng').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  saveDinner(n,ing,$('dUrl').value.trim());
-  $('dName').value='';$('dIng').value='';$('dUrl').value='';
+  keepDir=$('dDir').value.trim();saveDinner(n,ing,$('uIn').value.trim());
+  $('dName').value='';$('dIng').value='';$('dDir').value='';$('uIn').value='';
 };
 const gAdd=()=>{const t=$('gText').value.trim();if(!t)return;
   if(!S.groceries.some(g=>norm(g.text)===norm(t)&&!g.done))S.groceries.push({id:uid(),text:t,done:false,src:[],manual:true});
@@ -293,50 +437,7 @@ function done(res,url){
   saveDinner(String(res.title),res.ingredients.map(String),url);
   status('Added “'+res.title+'” ✓');$('uIn').value='';$('pText').value='';$('pasteBox').classList.add('hidden');
 }
-function decodeHtml(s){const t=document.createElement('textarea');t.innerHTML=s;return t.value}
-function findRecipe(j){
-  if(!j||typeof j!=='object')return null;
-  if(Array.isArray(j)){for(const x of j){const f=findRecipe(x);if(f)return f}return null}
-  const t=j['@type'];
-  if(t==='Recipe'||(Array.isArray(t)&&t.includes('Recipe')))return j;
-  return findRecipe(j['@graph']);
-}
-function stepsText(r){
-  const out=[];
-  (function walk(x){
-    if(!x)return;
-    if(typeof x==='string'){out.push(x);return}
-    if(Array.isArray(x)){x.forEach(walk);return}
-    if(x.itemListElement)walk(x.itemListElement);else if(x.text)out.push(x.text);
-  })(r.recipeInstructions);
-  return out.map((s,i)=>(i+1)+'. '+decodeHtml(String(s)).trim()).join('\n');
-}
-async function fetchRecipe(url){
-  const proxies=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?'+encodeURIComponent(u)];
-  for(const p of proxies){
-    try{
-      const r=await fetch(p(url));if(!r.ok)continue;
-      const doc=new DOMParser().parseFromString(await r.text(),'text/html');
-      for(const s of doc.querySelectorAll('script[type="application/ld+json"]')){
-        let j;try{j=JSON.parse(s.textContent)}catch(e){continue}
-        const f=findRecipe(j);
-        if(f&&Array.isArray(f.recipeIngredient)&&f.recipeIngredient.length)return f;
-      }
-    }catch(e){}
-  }
-  return null;
-}
 $('uGo').onclick=async()=>{
-  const url=$('uIn').value.trim();if(!/^https?:\/\//i.test(url)){status('Paste a full link starting with https://',true);return}
-  $('uGo').disabled=true;status('Reading the recipe…');
-  const f=await fetchRecipe(url);
-  $('uGo').disabled=false;
-  if(!f){done(null,url);return}
-  const ings=cleanIng(f.recipeIngredient.map(x=>decodeHtml(String(x))).join('\n'));
-  pendingDir=stepsText(f);
-  done({title:decodeHtml(String(f.name||'Untitled recipe')),ingredients:ings},url);
-};
-$('uGoOld').onclick=async()=>{
   const url=$('uIn').value.trim();if(!/^https?:\/\//i.test(url)){status('Paste a full link starting with https://',true);return}
   done(await ask('Open this recipe page and extract it: '+url+'\nIf you cannot open or read it, return {"error":"unreadable"}. '+FORMAT,$('uGo')),url);
 };
