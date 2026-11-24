@@ -56,6 +56,8 @@ a{color:var(--accent)}
  <section id="dinners">
   <h1>Dinners</h1>
   <p class="status">Tap the circle on a dinner to put it on this week’s menu. Its ingredients go to the Groceries tab.</p>
+  <button class="btn" id="addToggle" style="width:100%;margin-top:6px">＋ Add a Dinner</button>
+  <div id="addBox" class="hidden">
   <h2>Add from a website</h2>
   <div class="row"><input type="url" id="uIn" placeholder="Paste a recipe link" autocapitalize="off"><button class="btn" id="uGo">Get recipe</button></div>
   <div id="uStat" class="status hidden"></div>
@@ -65,6 +67,7 @@ a{color:var(--accent)}
   <textarea id="dIng" placeholder="Ingredients, one per line" style="min-height:220px"></textarea>
   <textarea id="dDir" placeholder="Directions (optional)" style="min-height:220px;margin-top:8px"></textarea>
   <div class="row" style="margin-top:8px"><button class="btn" id="dAdd" style="flex:1">Save dinner</button></div>
+  </div>
   <h2>Your dinners</h2>
   <input type="text" id="dSearch" placeholder="Search dinners" style="margin-bottom:10px">
   <div id="dList"></div>
@@ -256,6 +259,8 @@ function catOf(text){
 }
 
 function show(n){['dinners','dlist','groceries','pantry'].forEach((id,i)=>{$(id).classList.toggle('hidden',n!==i+1);$('t'+(i+1)).classList.toggle('on',n===i+1)})}
+function setAdd(open){$('addBox').classList.toggle('hidden',!open);$('addToggle').textContent=open?'Close':'＋ Add a Dinner'}
+$('addToggle').onclick=()=>setAdd($('addBox').classList.contains('hidden'));
 $('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);$('t3').onclick=()=>show(3);$('t4').onclick=()=>show(4);
 
 /* menu selection -> grocery list */
@@ -330,7 +335,7 @@ function renderDinners(){
     };
     r.append(pb,eb);
     const e=el('button','btn ghost','Edit');e.style.marginLeft='auto';
-    e.onclick=()=>{keepFav=!!d.fav;keepDir=d.directions||'';$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('dDir').value=d.directions||'';$('uIn').value=d.url||'';if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
+    e.onclick=()=>{keepFav=!!d.fav;keepDir=d.directions||'';$('dName').value=d.name;$('dIng').value=d.ingredients.join('\n');$('dDir').value=d.directions||'';$('uIn').value=d.url||'';setAdd(true);if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners();window.scrollTo(0,0)};
     const x=el('button','btn ghost','Delete');
     x.onclick=()=>{if(d.picked)setPicked(d,false);S.dinners=S.dinners.filter(v=>v.id!==d.id);save();renderDinners()};
     r.append(e,x);c.append(r);box.append(c);
@@ -409,7 +414,7 @@ $('dAdd').onclick=()=>{
   const n=$('dName').value.trim();if(!n)return;
   const ing=$('dIng').value.split('\n').map(s=>s.trim()).filter(Boolean);
   keepDir=$('dDir').value.trim();saveDinner(n,ing,$('uIn').value.trim());
-  $('dName').value='';$('dIng').value='';$('dDir').value='';$('uIn').value='';
+  $('dName').value='';$('dIng').value='';$('dDir').value='';$('uIn').value='';setAdd(false);
 };
 const gAdd=()=>{const t=$('gText').value.trim();if(!t)return;
   if(!S.groceries.some(g=>norm(g.text)===norm(t)&&!g.done))S.groceries.push({id:uid(),text:t,done:false,src:[],manual:true});
@@ -435,7 +440,7 @@ function done(res,url){
   if(!res||res.error||!res.title||!Array.isArray(res.ingredients)||!res.ingredients.length){
     status('I couldn’t read that site. Paste the recipe text below and I’ll pull out the ingredients.',true);$('pasteBox').classList.remove('hidden');return}
   saveDinner(String(res.title),res.ingredients.map(String),url);
-  status('Added “'+res.title+'” ✓');$('uIn').value='';$('pText').value='';$('pasteBox').classList.add('hidden');
+  status('Added “'+res.title+'” ✓');setAdd(false);toast('Added “'+res.title+'” ✓');$('uIn').value='';$('pText').value='';$('pasteBox').classList.add('hidden');
 }
 $('uGo').onclick=async()=>{
   const url=$('uIn').value.trim();if(!/^https?:\/\//i.test(url)){status('Paste a full link starting with https://',true);return}
