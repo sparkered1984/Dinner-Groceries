@@ -47,11 +47,16 @@ textarea{min-height:70px;resize:vertical}
 .status{font-size:15px;color:var(--muted);margin:0 0 10px}
 .status.err{color:var(--accent)}
 a{color:var(--accent)}
+input[type=email],input[type=password]{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text)}
+#login{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex;align-items:center;justify-content:center;padding:24px}
+#login.hidden{display:none}
+#login .box{width:100%;max-width:360px}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:15px;z-index:5;text-align:center}
 </style>
 </head>
 <body>
 <main>
+ <div id="acct" class="bar hidden"><span id="who"></span><button class="btn ghost" id="logout">Log out</button></div>
  <p id="sync" class="status hidden"></p>
  <section id="dinners">
   <h1>Dinners</h1>
@@ -93,6 +98,17 @@ a{color:var(--accent)}
  </section>
 </main>
 <div id="toast" class="toast hidden"></div>
+<div id="login"><div class="box">
+ <h1>Dinners</h1>
+ <p id="liMsg" class="status">Checking sign-in…</p>
+ <div id="liFields" class="hidden">
+  <p class="status">Sign in to open your dinner list.</p>
+  <input type="email" id="liEmail" placeholder="Email" autocapitalize="off" autocomplete="username" style="margin-bottom:8px">
+  <input type="password" id="liPass" placeholder="Password" autocomplete="current-password" style="margin-bottom:8px">
+  <p id="liErr" class="status err"></p>
+  <button class="btn" id="liGo" style="width:100%">Sign in</button>
+ </div>
+</div></div>
 <nav class="tabs"><button id="t1" class="on">🍽️ Dinners</button><button id="t2">📋 Dinner List</button><button id="t3">🛒 Groceries</button><button id="t4">🧂 Pantry</button></nav>
 <script>
 let S={dinners:[],groceries:[]};
@@ -605,8 +621,11 @@ async function startCloud(){
   const code='dinner-family-list-7k3q9x';
   setSync('\u2601\ufe0f Connecting\u2026');
   try{
-    const [A,F]=await Promise.all([import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')]);
-    const ref=F.doc(F.getFirestore(A.initializeApp(FB)),'lists',code);
+    const [A,F,U]=await Promise.all([import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js')]);
+    const app=A.initializeApp(FB),auth=U.getAuth(app);
+    const ref=F.doc(F.getFirestore(app),'lists',code);
+    let unsub=null;
+    const begin=()=>{
     let lastD='',lastG='',lastP='';
     cloudPush=()=>{
       const d=JSON.stringify(S.dinners),g=JSON.stringify(S.groceries),pp=JSON.stringify(S.pantry),p={};
@@ -616,7 +635,7 @@ async function startCloud(){
       if(!Object.keys(p).length)return;
       F.setDoc(ref,p,{merge:true}).then(()=>setSync('\u2601\ufe0f Synced')).catch(()=>{lastD='';lastG='';lastP='';setSync('\u26a0\ufe0f Couldn\u2019t save. Check your connection.')});
     };
-    F.onSnapshot(ref,snap=>{
+    unsub=F.onSnapshot(ref,snap=>{
       if(snap.metadata.hasPendingWrites)return;
       if(!snap.exists()){cloudPush();setSync('\u2601\ufe0f Synced');return}
       const x=snap.data();let ch=false;
@@ -627,7 +646,29 @@ async function startCloud(){
       if(ch){S.seeded=1;saveLocal();renderDinners();renderGroceries();renderPantry()}
       setSync('\u2601\ufe0f Synced');
     },()=>setSync('\u26a0\ufe0f Sync problem. Using this phone only.'));
-  }catch(e){setSync('\u26a0\ufe0f Couldn\u2019t connect. Using this phone only.')}
+    };
+    const doLogin=async()=>{
+      const e=$('liEmail').value.trim(),p=$('liPass').value;if(!e||!p)return;
+      $('liErr').textContent='';$('liGo').disabled=true;
+      try{await U.signInWithEmailAndPassword(auth,e,p);$('liPass').value=''}
+      catch(x){$('liErr').textContent='Wrong email or password.'}
+      finally{$('liGo').disabled=false}
+    };
+    $('liGo').onclick=doLogin;
+    $('liPass').addEventListener('keydown',ev=>{if(ev.key==='Enter')doLogin()});
+    $('logout').onclick=()=>U.signOut(auth);
+    U.onAuthStateChanged(auth,user=>{
+      if(user){
+        $('login').classList.add('hidden');$('acct').classList.remove('hidden');
+        $('who').textContent='Signed in as '+user.email;
+        if(!unsub){setSync('\u2601\ufe0f Connecting\u2026');begin()}
+      }else{
+        if(unsub){unsub();unsub=null}
+        cloudPush=()=>{};$('acct').classList.add('hidden');setSync('');
+        $('liMsg').classList.add('hidden');$('liFields').classList.remove('hidden');$('login').classList.remove('hidden');
+      }
+    });
+  }catch(e){setSync('\u26a0\ufe0f Couldn\u2019t connect. Using this phone only.');$('liMsg').textContent='Can’t connect. Check your connection and reopen the app.'}
 }
 startCloud();
 
